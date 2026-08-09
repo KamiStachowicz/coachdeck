@@ -18,6 +18,7 @@ import {
   moraleMeta,
   FormDots,
   MiniBars,
+  PrimaryButton,
   formatMoney,
   formatDate,
 } from '@/components/ui';
@@ -97,6 +98,13 @@ export default function PlayerDetail() {
             </View>
           </View>
         </Card>
+
+        {/* Karta zawodnika (styl FIFA) */}
+        <PrimaryButton
+          label="Zobacz kartę zawodnika"
+          icon="card-outline"
+          onPress={() => router.push(`/card/${player.id}`)}
+        />
 
         {/* Ocena ogólna + potencjał */}
         <Card>
