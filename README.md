@@ -128,7 +128,8 @@ Pliki: `src/sports/thesportsdb.ts` (serwis + mapowanie), `app/league.tsx` (ekran
 
 CoachDeck ma wbudowany model zarobkowy:
 
-- **Plany subskrypcji** (`app/plans.tsx`, `src/plans.ts`): Darmowy / Trener PRO (39 zł) /
+- **Okres próbny** 1 miesiąc za darmo (pełny dostęp), potem wymagany płatny plan — bez stałego darmowego planu
+- **Plany subskrypcji** (`app/plans.tsx`, `src/plans.ts`): Trener PRO (39 zł) /
   Klub (149 zł) / Klub Premium (349 zł) — z porównaniem funkcji i limitami
 - **Paywall** (`components/ui.tsx` → `Paywall`): funkcje premium (skauting, ligi zawodowe,
   płatności online, panel przychodów) zablokowane dla niższych planów z zachętą do upgrade'u
