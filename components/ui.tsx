@@ -9,6 +9,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useTheme, spacing, radius, font } from '@/src/theme';
 
 /** Karta z tłem i cieniem. */
@@ -204,6 +205,41 @@ export function PrimaryButton({
       {icon ? <Ionicons name={icon} size={18} color={c.onPrimary} /> : null}
       <Text style={{ color: c.onPrimary, fontWeight: '700', fontSize: font.body }}>{label}</Text>
     </Pressable>
+  );
+}
+
+/** Blokada funkcji premium (paywall). */
+export function Paywall({
+  feature,
+  planName,
+}: {
+  feature: string;
+  planName: string;
+}) {
+  const c = useTheme();
+  const router = useRouter();
+  return (
+    <View style={{ alignItems: 'center', padding: spacing.xl, gap: spacing.md }}>
+      <View
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: c.primarySoft,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Ionicons name="lock-closed" size={32} color={c.primary} />
+      </View>
+      <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3, textAlign: 'center' }}>
+        {feature}
+      </Text>
+      <Text style={{ color: c.textMuted, textAlign: 'center', fontSize: font.small }}>
+        Ta funkcja jest dostępna w planie {planName} i wyższych.
+      </Text>
+      <PrimaryButton label="Zobacz plany" icon="rocket-outline" onPress={() => router.push('/plans')} />
+    </View>
   );
 }
 

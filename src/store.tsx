@@ -27,6 +27,7 @@ import {
 } from './data';
 import { isBackendConfigured } from './config';
 import { supabase, fetchInitialData, fetchPayments, paymentToRow } from './supabase';
+import { getPlan, type PlanId, type FeatureKey } from './plans';
 
 /**
  * Magazyn stanu aplikacji.
@@ -64,6 +65,9 @@ interface StoreValue {
   addGoal: (playerId: string, text: string) => void;
   toggleGoal: (goalId: string) => void;
   removeGoal: (goalId: string) => void;
+  currentPlan: PlanId;
+  setPlan: (plan: PlanId) => void;
+  hasFeature: (key: FeatureKey) => boolean;
   addPayment: (p: Omit<Payment, 'id'>) => void;
   markPaid: (id: string) => void;
   markUnpaid: (id: string) => void;
@@ -99,6 +103,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [scoutTargets, setScoutTargets] = useState<ScoutTarget[]>(SCOUT_TARGETS);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [goals, setGoals] = useState<TrainingGoal[]>(TRAINING_GOALS);
+  const [currentPlan, setCurrentPlan] = useState<PlanId>('free');
   const [loading, setLoading] = useState<boolean>(backend);
 
   // Ładowanie danych z bazy (tylko gdy backend skonfigurowany).
@@ -250,6 +255,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleGoal: (goalId) =>
         setGoals((prev) => prev.map((g) => (g.id === goalId ? { ...g, done: !g.done } : g))),
       removeGoal: (goalId) => setGoals((prev) => prev.filter((g) => g.id !== goalId)),
+      currentPlan,
+      setPlan: (plan) => setCurrentPlan(plan),
+      hasFeature: (key) => getPlan(currentPlan).unlocks.includes(key),
       addEvent: (e) =>
         setEvents((prev) =>
           [...prev, { ...e, id: nextId('e') }].sort((a, b) => a.date.localeCompare(b.date)),
@@ -290,7 +298,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, currentPlan, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -20,16 +20,18 @@ import {
 import type { Payment, PaymentStatus } from '@/src/types';
 import { isOnlinePaymentsEnabled } from '@/src/config';
 import { startOnlinePayment } from '@/src/payments/online';
+import { SERVICE_FEE } from '@/src/plans';
 
 type Filter = 'all' | PaymentStatus;
 
 export default function FinancesScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { payments, getPlayer, getTeam, markPaid, markUnpaid, refreshPayments, financeSummary } =
+  const { payments, getPlayer, getTeam, markPaid, markUnpaid, refreshPayments, financeSummary, hasFeature } =
     useStore();
   const [filter, setFilter] = useState<Filter>('all');
-  const onlineEnabled = isOnlinePaymentsEnabled();
+  // Płatności online wymagają backendu (Przelewy24) ORAZ planu Klub.
+  const onlineEnabled = isOnlinePaymentsEnabled() && hasFeature('onlinePayments');
 
   const payOnline = async (pay: Payment) => {
     // W produkcji przekaż tu e-mail płatnika (np. rodzica/opiekuna).
@@ -87,6 +89,12 @@ export default function FinancesScreen() {
         </Card>
 
         <PrimaryButton label="Dodaj opłatę" icon="add" onPress={() => router.push('/modal?type=payment')} />
+
+        {onlineEnabled ? (
+          <Text style={{ color: c.textMuted, fontSize: font.tiny, textAlign: 'center' }}>
+            Płatności online: opłata serwisowa {SERVICE_FEE.percent}% (min. {SERVICE_FEE.min} zł) od wpłaty.
+          </Text>
+        ) : null}
 
         {/* Filtry */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>

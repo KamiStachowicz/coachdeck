@@ -50,3 +50,38 @@ export async function startOnlinePayment(
     return { ok: false, message: e?.message ?? 'Błąd sieci.' };
   }
 }
+
+/**
+ * Rozpoczyna płatność za plan subskrypcji przez Przelewy24.
+ * Hak gotowy do podłączenia — działa po ustawieniu kluczy P24 w Supabase.
+ * Do tego czasu wybór planu aktywuje się lokalnie (tryb demo).
+ */
+export async function startSubscription(
+  planId: string,
+  amount: number,
+  email: string,
+): Promise<PaymentResult> {
+  if (!isOnlinePaymentsEnabled()) {
+    return { ok: false, message: 'Płatności online nie są jeszcze podłączone.' };
+  }
+  const returnUrl = Linking.createURL('/plans');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/p24-subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ planId, amount, email, returnUrl }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.redirectUrl) {
+      return { ok: false, message: data?.error ?? 'Nie udało się rozpocząć subskrypcji.' };
+    }
+    await WebBrowser.openBrowserAsync(data.redirectUrl as string);
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, message: e?.message ?? 'Błąd sieci.' };
+  }
+}
