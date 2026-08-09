@@ -1,70 +1,37 @@
-import { SymbolView } from 'expo-symbols';
-import { Link, Tabs } from 'expo-router';
-import { Platform, Pressable } from 'react-native';
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import type { ColorValue } from 'react-native';
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useTheme } from '@/src/theme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
+function tabIcon(name: keyof typeof Ionicons.glyphMap) {
+  return ({ color }: { color: ColorValue }) => (
+    <Ionicons name={name} size={24} color={color as string} />
+  );
+}
+
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const c = useTheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
+        tabBarActiveTintColor: c.primary,
+        tabBarInactiveTintColor: c.tabInactive,
         headerShown: useClientOnlyValue(false, true),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: 'info.circle', android: 'info', web: 'info' }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
-        }}
-      />
+        headerStyle: { backgroundColor: c.card },
+        headerTitleStyle: { color: c.text, fontWeight: '800' },
+        tabBarStyle: { backgroundColor: c.tabBar, borderTopColor: c.border },
+        sceneStyle: { backgroundColor: c.background },
+      }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Pulpit', tabBarIcon: tabIcon('grid-outline') }} />
+      <Tabs.Screen name="teams" options={{ title: 'Drużyny', tabBarIcon: tabIcon('shield-outline') }} />
+      <Tabs.Screen name="calendar" options={{ title: 'Kalendarz', tabBarIcon: tabIcon('calendar-outline') }} />
+      <Tabs.Screen name="players" options={{ title: 'Zawodnicy', tabBarIcon: tabIcon('people-outline') }} />
+      <Tabs.Screen name="more" options={{ title: 'Więcej', tabBarIcon: tabIcon('ellipsis-horizontal') }} />
     </Tabs>
   );
 }

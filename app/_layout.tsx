@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { StoreProvider } from '@/src/store';
+import { brand } from '@/src/theme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -12,19 +14,25 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const CoachLight = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, primary: brand.primary, background: '#F5F7FA' },
+};
+const CoachDark = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, primary: brand.primary, background: '#0B1220', card: '#0F1826' },
+};
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -46,11 +54,15 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <StoreProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? CoachDark : CoachLight}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Dodaj' }} />
+          <Stack.Screen name="team/[id]" options={{ title: 'Drużyna' }} />
+          <Stack.Screen name="player/[id]" options={{ title: 'Zawodnik' }} />
+        </Stack>
+      </ThemeProvider>
+    </StoreProvider>
   );
 }
