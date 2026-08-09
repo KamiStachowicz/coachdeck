@@ -63,3 +63,18 @@ export interface AttendanceRecord {
   playerId: string;
   present: boolean;
 }
+
+export type PaymentKind = 'dues' | 'class' | 'camp' | 'equipment' | 'other';
+export type PaymentStatus = 'paid' | 'pending' | 'overdue';
+
+export interface Payment {
+  id: string;
+  playerId: string;
+  teamId: string;
+  kind: PaymentKind;
+  title: string; // np. "Składka – marzec 2026"
+  amount: number; // w PLN
+  dueDate: string; // ISO
+  paidDate?: string; // ISO, jeśli zapłacone
+  status: PaymentStatus;
+}

@@ -261,5 +261,17 @@ export function formatTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
+export function formatMoney(amount: number): string {
+  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 }).format(amount);
+}
+
+export const paymentStatusMeta: Record<
+  'paid' | 'pending' | 'overdue',
+  { label: string; color: string; bg: string }
+> = {
+  paid: { label: 'Zapłacone', color: '#059669', bg: '#D1FAE5' },
+  pending: { label: 'Oczekuje', color: '#D97706', bg: '#FEF3C7' },
+  overdue: { label: 'Zaległe', color: '#DC2626', bg: '#FEE2E2' },
+};
 
 export { TextStyle };

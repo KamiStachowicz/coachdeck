@@ -13,7 +13,10 @@ Jeden kod źródłowy → działa jako **apka na iOS/Android** i jako **strona w
 - 🛡️ **Drużyny** — wiele drużyn i kategorii (Seniorzy, U-15, ...), różne dyscypliny
 - 👥 **Zawodnicy** — kadra, profile, atrybuty (kondycja/technika/taktyka/mentalność), status
 - 📅 **Kalendarz** — treningi i mecze, grupowane po dniach, dodawanie wydarzeń
-- ⚙️ **Więcej** — profil, statystyki, plany treningowe, składki (placeholdery)
+- 💰 **Finanse i składki** — składki miesięczne, opłaty za zajęcia/obozy/sprzęt,
+  statusy (zapłacone / oczekujące / zaległe), oznaczanie „zapłacono" jednym kliknięciem,
+  podsumowanie zebranych i zaległych kwot, historia płatności w profilu zawodnika
+- ⚙️ **Więcej** — profil, statystyki, plany treningowe (placeholdery)
 - 🏅 **Wielodyscyplinowość** — piłka nożna, koszykówka, siatkówka, piłka ręczna,
   tenis, lekkoatletyka, pływanie, hokej
 

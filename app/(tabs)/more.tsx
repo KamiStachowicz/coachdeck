@@ -1,21 +1,30 @@
 import React from 'react';
-import { ScrollView, View, Text, Pressable } from 'react-native';
+import { ScrollView, View, Text } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme, spacing, font, radius } from '@/src/theme';
-import { Card } from '@/components/ui';
+import { Card, formatMoney } from '@/components/ui';
 import { SPORTS } from '@/src/data';
+import { useStore } from '@/src/store';
 
-const MENU: { icon: keyof typeof Ionicons.glyphMap; label: string; hint: string }[] = [
+const MENU: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  hint: string;
+  route?: string;
+}[] = [
+  { icon: 'card-outline', label: 'Finanse i składki', hint: 'Opłaty, składki, zajęcia', route: '/finances' },
   { icon: 'stats-chart-outline', label: 'Statystyki', hint: 'Analizy formy i frekwencji' },
   { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Biblioteka ćwiczeń' },
   { icon: 'chatbubbles-outline', label: 'Komunikacja', hint: 'Wiadomości do drużyny' },
-  { icon: 'card-outline', label: 'Składki', hint: 'Opłaty i finanse klubu' },
   { icon: 'settings-outline', label: 'Ustawienia', hint: 'Konto i preferencje' },
 ];
 
 export default function MoreScreen() {
   const c = useTheme();
+  const router = useRouter();
+  const { financeSummary } = useStore();
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
@@ -43,10 +52,26 @@ export default function MoreScreen() {
         </View>
       </Card>
 
+      {/* Skrót finansów */}
+      <Card onPress={() => router.push('/finances')} style={{ backgroundColor: c.primary }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Ionicons name="wallet-outline" size={26} color="#fff" />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: font.body }}>Do zebrania</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: font.small }}>
+              Składki i opłaty za zajęcia
+            </Text>
+          </View>
+          <Text style={{ color: '#fff', fontWeight: '900', fontSize: font.h3 }}>
+            {formatMoney(financeSummary.total)}
+          </Text>
+        </View>
+      </Card>
+
       {/* Menu */}
       <View style={{ gap: spacing.md }}>
         {MENU.map((m) => (
-          <Card key={m.label}>
+          <Card key={m.label} onPress={m.route ? () => router.push(m.route as any) : undefined}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
               <View
                 style={{

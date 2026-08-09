@@ -61,6 +61,7 @@ function RootLayoutNav() {
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Dodaj' }} />
           <Stack.Screen name="team/[id]" options={{ title: 'Drużyna' }} />
           <Stack.Screen name="player/[id]" options={{ title: 'Zawodnik' }} />
+          <Stack.Screen name="finances" options={{ title: 'Finanse i składki' }} />
         </Stack>
       </ThemeProvider>
     </StoreProvider>

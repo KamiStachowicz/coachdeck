@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, View, Text, TextInput, Pressable, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
-import { getSport } from '@/src/data';
+import { getSport, PAYMENT_KINDS } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { PrimaryButton } from '@/components/ui';
+import type { PaymentKind } from '@/src/types';
+
+type Mode = 'player' | 'event' | 'payment';
 
 export default function AddModal() {
   const c = useTheme();
   const router = useRouter();
   const { type } = useLocalSearchParams<{ type?: string }>();
-  const isEvent = type === 'event';
-  const { teams, addPlayer, addEvent } = useStore();
+  const mode: Mode = type === 'event' ? 'event' : type === 'payment' ? 'payment' : 'player';
+  const { teams, players, addPlayer, addEvent, addPayment } = useStore();
 
   const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
 
@@ -28,6 +32,14 @@ export default function AddModal() {
   const [eventType, setEventType] = useState<'training' | 'match'>('training');
   const [opponent, setOpponent] = useState('');
   const [location, setLocation] = useState('');
+
+  // pola płatności
+  const [playerId, setPlayerId] = useState('');
+  const [payKind, setPayKind] = useState<PaymentKind>('dues');
+  const [payTitle, setPayTitle] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const teamPlayers = useMemo(() => players.filter((p) => p.teamId === teamId), [players, teamId]);
 
   const inputStyle = {
     backgroundColor: c.card,
@@ -45,11 +57,16 @@ export default function AddModal() {
     </Text>
   );
 
-  const canSave = isEvent ? title.trim().length > 0 : firstName.trim() && lastName.trim();
+  const canSave =
+    mode === 'event'
+      ? title.trim().length > 0
+      : mode === 'payment'
+        ? !!playerId && Number(amount) > 0
+        : !!firstName.trim() && !!lastName.trim();
 
   const save = () => {
     if (!canSave) return;
-    if (isEvent) {
+    if (mode === 'event') {
       const date = new Date();
       date.setDate(date.getDate() + 1);
       date.setHours(18, 0, 0, 0);
@@ -60,6 +77,18 @@ export default function AddModal() {
         date: date.toISOString(),
         location: location.trim() || undefined,
         opponent: eventType === 'match' ? opponent.trim() || undefined : undefined,
+      });
+    } else if (mode === 'payment') {
+      const due = new Date();
+      due.setDate(due.getDate() + 14);
+      addPayment({
+        playerId,
+        teamId,
+        kind: payKind,
+        title: payTitle.trim() || PAYMENT_KINDS[payKind].label,
+        amount: Number(amount),
+        dueDate: due.toISOString(),
+        status: 'pending',
       });
     } else {
       addPlayer({
@@ -75,9 +104,12 @@ export default function AddModal() {
     router.back();
   };
 
+  const screenTitle =
+    mode === 'event' ? 'Nowe wydarzenie' : mode === 'payment' ? 'Nowa opłata' : 'Nowy zawodnik';
+
   return (
     <>
-      <Stack.Screen options={{ title: isEvent ? 'Nowe wydarzenie' : 'Nowy zawodnik' }} />
+      <Stack.Screen options={{ title: screenTitle }} />
       <ScrollView
         style={{ backgroundColor: c.background }}
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
@@ -92,7 +124,10 @@ export default function AddModal() {
               return (
                 <Pressable
                   key={t.id}
-                  onPress={() => setTeamId(t.id)}
+                  onPress={() => {
+                    setTeamId(t.id);
+                    setPlayerId('');
+                  }}
                   style={{
                     paddingHorizontal: spacing.md,
                     paddingVertical: spacing.sm,
@@ -111,7 +146,7 @@ export default function AddModal() {
           </ScrollView>
         </View>
 
-        {isEvent ? (
+        {mode === 'event' ? (
           <>
             <View>
               <Label>Typ</Label>
@@ -174,6 +209,99 @@ export default function AddModal() {
             </View>
             <Text style={{ color: c.textMuted, fontSize: font.tiny }}>
               Wydarzenie zostanie dodane na jutro, 18:00 (wybór daty w kolejnej wersji).
+            </Text>
+          </>
+        ) : mode === 'payment' ? (
+          <>
+            <View>
+              <Label>Zawodnik</Label>
+              {teamPlayers.length === 0 ? (
+                <Text style={{ color: c.textMuted, fontSize: font.small }}>
+                  Brak zawodników w tej drużynie.
+                </Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+                  {teamPlayers.map((p) => {
+                    const active = playerId === p.id;
+                    return (
+                      <Pressable
+                        key={p.id}
+                        onPress={() => setPlayerId(p.id)}
+                        style={{
+                          paddingHorizontal: spacing.md,
+                          paddingVertical: spacing.sm,
+                          borderRadius: radius.pill,
+                          backgroundColor: active ? c.primary : c.card,
+                          borderWidth: 1,
+                          borderColor: active ? c.primary : c.border,
+                        }}
+                      >
+                        <Text style={{ color: active ? '#fff' : c.text, fontWeight: '600', fontSize: font.small }}>
+                          {p.firstName} {p.lastName}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </View>
+
+            <View>
+              <Label>Rodzaj opłaty</Label>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                {(Object.keys(PAYMENT_KINDS) as PaymentKind[]).map((k) => {
+                  const meta = PAYMENT_KINDS[k];
+                  const active = payKind === k;
+                  return (
+                    <Pressable
+                      key={k}
+                      onPress={() => setPayKind(k)}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        paddingHorizontal: spacing.md,
+                        paddingVertical: spacing.sm,
+                        borderRadius: radius.pill,
+                        backgroundColor: active ? meta.color : c.card,
+                        borderWidth: 1,
+                        borderColor: active ? meta.color : c.border,
+                      }}
+                    >
+                      <Ionicons name={meta.icon as any} size={15} color={active ? '#fff' : meta.color} />
+                      <Text style={{ color: active ? '#fff' : c.text, fontWeight: '600', fontSize: font.small }}>
+                        {meta.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View>
+              <Label>Opis (opcjonalnie)</Label>
+              <TextInput
+                value={payTitle}
+                onChangeText={setPayTitle}
+                placeholder="np. Składka – marzec 2026"
+                placeholderTextColor={c.tabInactive}
+                style={inputStyle}
+              />
+            </View>
+
+            <View>
+              <Label>Kwota (PLN)</Label>
+              <TextInput
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="np. 120"
+                keyboardType="numeric"
+                placeholderTextColor={c.tabInactive}
+                style={inputStyle}
+              />
+            </View>
+            <Text style={{ color: c.textMuted, fontSize: font.tiny }}>
+              Termin płatności zostanie ustawiony na 14 dni od dziś (wybór daty w kolejnej wersji).
             </Text>
           </>
         ) : (

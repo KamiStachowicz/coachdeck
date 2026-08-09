@@ -14,12 +14,13 @@ import {
   Avatar,
   formatDate,
   formatTime,
+  formatMoney,
 } from '@/components/ui';
 
 export default function Dashboard() {
   const c = useTheme();
   const router = useRouter();
-  const { teams, players, events, getTeam } = useStore();
+  const { teams, players, events, getTeam, financeSummary } = useStore();
 
   const now = new Date();
   const upcoming = [...events]
@@ -49,6 +50,37 @@ export default function Dashboard() {
         <StatTile label="Wydarzenia" value={events.length} icon="calendar-outline" tint={c.accent} />
         <StatTile label="Kontuzje" value={injured} icon="medkit-outline" tint={c.danger} />
       </View>
+
+      {/* Finanse */}
+      <Card onPress={() => router.push('/finances')}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <View
+            style={{
+              width: 46,
+              height: 46,
+              borderRadius: radius.md,
+              backgroundColor: c.primary + '22',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="wallet-outline" size={22} color={c.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: c.text, fontWeight: '700', fontSize: font.body }}>Finanse i składki</Text>
+            <Text style={{ color: c.textMuted, fontSize: font.small }}>
+              Zebrano {formatMoney(financeSummary.collected)}
+              {financeSummary.overdue > 0 ? ` · zaległe ${formatMoney(financeSummary.overdue)}` : ''}
+            </Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={{ color: c.primary, fontWeight: '900', fontSize: font.h3 }}>
+              {formatMoney(financeSummary.total)}
+            </Text>
+            <Text style={{ color: c.textMuted, fontSize: font.tiny }}>do zebrania</Text>
+          </View>
+        </View>
+      </Card>
 
       {/* Najbliższe wydarzenia */}
       <View>

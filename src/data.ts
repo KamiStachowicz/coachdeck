@@ -1,4 +1,4 @@
-import type { Sport, Team, Player, CoachEvent } from './types';
+import type { Sport, Team, Player, CoachEvent, Payment, PaymentKind } from './types';
 
 export const SPORTS: Sport[] = [
   { id: 'football', name: 'Piłka nożna', icon: 'football-outline', color: '#059669', positions: ['Bramkarz', 'Obrońca', 'Pomocnik', 'Napastnik'] },
@@ -62,4 +62,33 @@ export const EVENTS: CoachEvent[] = [
   { id: 'e3', teamId: 't2', type: 'training', title: 'Trening – technika', date: daysFromNow(1, 17), location: 'Orlik' },
   { id: 'e4', teamId: 't3', type: 'match', title: 'Puchar – 1/8 finału', date: daysFromNow(3, 19), location: 'Hala Sportowa', opponent: 'Zagłębie' },
   { id: 'e5', teamId: 't1', type: 'training', title: 'Trening – kondycja', date: daysFromNow(4, 18), location: 'Boisko boczne' },
+];
+
+export const PAYMENT_KINDS: Record<
+  PaymentKind,
+  { label: string; icon: string; color: string }
+> = {
+  dues: { label: 'Składka', icon: 'repeat-outline', color: '#059669' },
+  class: { label: 'Zajęcia', icon: 'barbell-outline', color: '#3B82F6' },
+  camp: { label: 'Obóz', icon: 'bonfire-outline', color: '#F97316' },
+  equipment: { label: 'Sprzęt', icon: 'shirt-outline', color: '#7C3AED' },
+  other: { label: 'Inne', icon: 'cash-outline', color: '#64748B' },
+};
+
+function payDate(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(12, 0, 0, 0);
+  return d.toISOString();
+}
+
+export const PAYMENTS: Payment[] = [
+  { id: 'pay1', playerId: 'p1', teamId: 't1', kind: 'dues', title: 'Składka miesięczna', amount: 120, dueDate: payDate(-5), paidDate: payDate(-6), status: 'paid' },
+  { id: 'pay2', playerId: 'p2', teamId: 't1', kind: 'dues', title: 'Składka miesięczna', amount: 120, dueDate: payDate(3), status: 'pending' },
+  { id: 'pay3', playerId: 'p3', teamId: 't1', kind: 'dues', title: 'Składka miesięczna', amount: 120, dueDate: payDate(-8), status: 'overdue' },
+  { id: 'pay4', playerId: 'p4', teamId: 't1', kind: 'camp', title: 'Obóz letni – zaliczka', amount: 400, dueDate: payDate(10), status: 'pending' },
+  { id: 'pay5', playerId: 'p6', teamId: 't2', kind: 'dues', title: 'Składka miesięczna', amount: 90, dueDate: payDate(-3), status: 'overdue' },
+  { id: 'pay6', playerId: 'p7', teamId: 't2', kind: 'class', title: 'Dodatkowe zajęcia techniczne', amount: 60, dueDate: payDate(-1), paidDate: payDate(-1), status: 'paid' },
+  { id: 'pay7', playerId: 'p8', teamId: 't3', kind: 'dues', title: 'Składka miesięczna', amount: 150, dueDate: payDate(5), status: 'pending' },
+  { id: 'pay8', playerId: 'p9', teamId: 't3', kind: 'equipment', title: 'Komplet strojów', amount: 220, dueDate: payDate(-2), status: 'overdue' },
 ];
