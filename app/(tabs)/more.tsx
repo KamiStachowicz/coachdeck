@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme, spacing, font, radius } from '@/src/theme';
-import { Card, formatMoney } from '@/components/ui';
+import { Card, Badge, formatMoney } from '@/components/ui';
 import { SPORTS } from '@/src/data';
 import { useStore } from '@/src/store';
+import { getPlan } from '@/src/plans';
 
 const MENU: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -17,6 +18,7 @@ const MENU: {
   { icon: 'card-outline', label: 'Finanse i składki', hint: 'Opłaty, składki, zajęcia', route: '/finances' },
   { icon: 'trophy-outline', label: 'Liga i wyniki', hint: 'Tabela ligowa i mecze', route: '/league' },
   { icon: 'search-outline', label: 'Skauting i transfery', hint: 'Obserwuj i podpisuj zawodników', route: '/scouting' },
+  { icon: 'bar-chart-outline', label: 'Panel przychodów', hint: 'Subskrypcje i prowizje', route: '/revenue' },
   { icon: 'stats-chart-outline', label: 'Statystyki', hint: 'Analizy formy i frekwencji' },
   { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Biblioteka ćwiczeń' },
   { icon: 'chatbubbles-outline', label: 'Komunikacja', hint: 'Wiadomości do drużyny' },
@@ -26,7 +28,8 @@ const MENU: {
 export default function MoreScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { financeSummary } = useStore();
+  const { financeSummary, currentPlan } = useStore();
+  const plan = getPlan(currentPlan);
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
@@ -47,10 +50,28 @@ export default function MoreScreen() {
           >
             <Ionicons name="person" size={26} color="#fff" />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>Trener</Text>
-            <Text style={{ color: c.textMuted, fontSize: font.small }}>Konto demonstracyjne</Text>
+            <View style={{ flexDirection: 'row', marginTop: 4 }}>
+              <Badge label={`Plan: ${plan.name}`} color={plan.color} bg={plan.color + '22'} />
+            </View>
           </View>
+        </View>
+      </Card>
+
+      {/* Upsell planu */}
+      <Card onPress={() => router.push('/plans')} style={{ backgroundColor: c.accent }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Ionicons name="rocket-outline" size={26} color="#fff" />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: font.body }}>
+              {currentPlan === 'premium' ? 'Masz najwyższy plan 🎉' : 'Odblokuj więcej z planem'}
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: font.small }}>
+              Plany i cennik · taktyka, płatności, skauting
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#fff" />
         </View>
       </Card>
 

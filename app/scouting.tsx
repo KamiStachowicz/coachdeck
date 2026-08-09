@@ -6,13 +6,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { useStore } from '@/src/store';
 import { getSport } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
-import { Card, Badge, SectionTitle, EmptyState, ProgressBar, formatMoney, formatDate } from '@/components/ui';
+import { Card, Badge, SectionTitle, EmptyState, ProgressBar, Paywall, formatMoney, formatDate } from '@/components/ui';
 
 export default function ScoutingScreen() {
   const c = useTheme();
-  const { scoutTargets, transfers, teams, toggleWatch, signTarget } = useStore();
+  const { scoutTargets, transfers, teams, toggleWatch, signTarget, hasFeature } = useStore();
   const [signing, setSigning] = useState<string | null>(null);
   const [filterWatched, setFilterWatched] = useState(false);
+
+  if (!hasFeature('scouting')) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Skauting i transfery' }} />
+        <View style={{ flex: 1, backgroundColor: c.background, justifyContent: 'center' }}>
+          <Paywall feature="Skauting i transfery" planName="Trener PRO" />
+        </View>
+      </>
+    );
+  }
 
   const shown = filterWatched ? scoutTargets.filter((t) => t.watched) : scoutTargets;
 

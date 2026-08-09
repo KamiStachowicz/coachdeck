@@ -124,6 +124,21 @@ Aplikacja obsługuje brak danych z API: pokazuje komunikat i nie blokuje reszty 
 
 Pliki: `src/sports/thesportsdb.ts` (serwis + mapowanie), `app/league.tsx` (ekran).
 
+## Monetyzacja 💵
+
+CoachDeck ma wbudowany model zarobkowy:
+
+- **Plany subskrypcji** (`app/plans.tsx`, `src/plans.ts`): Darmowy / Trener PRO (39 zł) /
+  Klub (149 zł) / Klub Premium (349 zł) — z porównaniem funkcji i limitami
+- **Paywall** (`components/ui.tsx` → `Paywall`): funkcje premium (skauting, ligi zawodowe,
+  płatności online, panel przychodów) zablokowane dla niższych planów z zachętą do upgrade'u
+- **Prowizja od składek** (`src/plans.ts` → `SERVICE_FEE`): 1,5% (min. 1 zł) od każdej
+  wpłaty online — skalujący się przychód rosnący z liczbą klubów
+- **Panel przychodów** (`app/revenue.tsx`): MRR z subskrypcji, prowizje, płacące kluby
+
+Rozliczenia subskrypcji obsłuży **Przelewy24** (funkcja `p24-subscribe` gotowa do
+podłączenia). Do czasu podania kluczy wybór planu działa lokalnie (demo).
+
 ## Plan rozwoju
 
 - [x] Moduł składek/finansów klubu

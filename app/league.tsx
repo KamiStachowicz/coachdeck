@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
 import { useTheme, spacing, font, radius } from '@/src/theme';
-import { Card, Badge, SectionTitle, EmptyState, PrimaryButton, formatDate } from '@/components/ui';
+import { Card, Badge, SectionTitle, EmptyState, PrimaryButton, Paywall, formatDate } from '@/components/ui';
 import type { StandingRow } from '@/src/types';
 import {
   LEAGUE_PRESETS,
@@ -121,6 +121,15 @@ function MyLeague() {
 /* ---------------- Liga zawodowa (TheSportsDB) ---------------- */
 
 function ProLeague() {
+  const c = useTheme();
+  const { hasFeature } = useStore();
+  if (!hasFeature('proLeague')) {
+    return <Paywall feature="Ligi zawodowe (API)" planName="Trener PRO" />;
+  }
+  return <ProLeagueInner />;
+}
+
+function ProLeagueInner() {
   const c = useTheme();
   const [league, setLeague] = useState<LeaguePreset>(LEAGUE_PRESETS[0]);
   const [loading, setLoading] = useState(false);
