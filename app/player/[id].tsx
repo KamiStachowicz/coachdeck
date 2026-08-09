@@ -15,6 +15,9 @@ import {
   EmptyState,
   statusMeta,
   paymentStatusMeta,
+  moraleMeta,
+  FormDots,
+  MiniBars,
   formatMoney,
   formatDate,
 } from '@/components/ui';
@@ -25,6 +28,16 @@ const RATING_LABELS: { key: 'fitness' | 'technique' | 'tactics' | 'mentality'; l
   { key: 'tactics', label: 'Taktyka' },
   { key: 'mentality', label: 'Mentalność' },
 ];
+
+function StatCell({ label, value }: { label: string; value: string | number }) {
+  const c = useTheme();
+  return (
+    <View style={{ width: '25%', alignItems: 'center', paddingVertical: spacing.md }}>
+      <Text style={{ color: c.text, fontWeight: '900', fontSize: font.h3 }}>{value}</Text>
+      <Text style={{ color: c.textMuted, fontSize: font.tiny, textAlign: 'center' }}>{label}</Text>
+    </View>
+  );
+}
 
 export default function PlayerDetail() {
   const c = useTheme();
@@ -74,20 +87,104 @@ export default function PlayerDetail() {
               ) : null}
             </View>
             <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {player.captain ? <Badge label="Kapitan (C)" color={c.accent} bg={c.accent + '22'} /> : null}
               {player.position ? <Badge label={player.position} /> : null}
               {age ? <Badge label={`${age} lat`} /> : null}
+              <Badge label={`Noga: ${player.foot === 'both' ? 'obie' : player.foot === 'L' ? 'lewa' : 'prawa'}`} />
               <Badge label={st.label} color={st.color} bg={st.bg} />
             </View>
           </View>
         </Card>
 
-        {/* Ocena ogólna */}
+        {/* Ocena ogólna + potencjał */}
         <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ color: c.text, fontWeight: '700', fontSize: font.body }}>Ocena ogólna</Text>
-            <Text style={{ color: ratingColor(avg), fontWeight: '900', fontSize: font.h1 }}>{avg}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: ratingColor(avg), fontWeight: '900', fontSize: font.h1 }}>{avg}</Text>
+              <Text style={{ color: c.textMuted, fontSize: font.tiny }}>Ocena ogólna</Text>
+            </View>
+            <View style={{ width: 1, height: 40, backgroundColor: c.border }} />
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: c.info, fontWeight: '900', fontSize: font.h1 }}>{player.potential}</Text>
+              <Text style={{ color: c.textMuted, fontSize: font.tiny }}>Potencjał</Text>
+            </View>
+            <View style={{ width: 1, height: 40, backgroundColor: c.border }} />
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: c.text, fontWeight: '900', fontSize: font.h3 }}>
+                {formatMoney(player.value)}
+              </Text>
+              <Text style={{ color: c.textMuted, fontSize: font.tiny }}>Wartość</Text>
+            </View>
           </View>
         </Card>
+
+        {/* Morale i gotowość */}
+        <View style={{ flexDirection: 'row', gap: spacing.md }}>
+          <Card style={{ flex: 1 }}>
+            <Text style={{ color: c.textMuted, fontSize: font.tiny, marginBottom: 6 }}>Morale</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name={moraleMeta[player.morale].icon} size={20} color={moraleMeta[player.morale].color} />
+              <Text style={{ color: moraleMeta[player.morale].color, fontWeight: '800' }}>
+                {moraleMeta[player.morale].label}
+              </Text>
+            </View>
+          </Card>
+          <Card style={{ flex: 1 }}>
+            <Text style={{ color: c.textMuted, fontSize: font.tiny, marginBottom: 6 }}>Gotowość na mecz</Text>
+            <Text
+              style={{
+                color: player.condition >= 75 ? c.primary : player.condition >= 50 ? c.warning : c.danger,
+                fontWeight: '900',
+                fontSize: font.h3,
+                marginBottom: 4,
+              }}
+            >
+              {player.condition}%
+            </Text>
+            <ProgressBar
+              value={player.condition}
+              color={player.condition >= 75 ? c.primary : player.condition >= 50 ? c.warning : c.danger}
+            />
+          </Card>
+        </View>
+
+        {/* Statystyki sezonu */}
+        <View>
+          <SectionTitle title="Statystyki sezonu" />
+          <Card>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <StatCell label="Mecze" value={player.stats.apps} />
+              <StatCell label="Gole" value={player.stats.goals} />
+              <StatCell label="Asysty" value={player.stats.assists} />
+              <StatCell label="Minuty" value={player.stats.minutes} />
+              <StatCell label="Śr. ocena" value={player.stats.avgRating.toFixed(1)} />
+              <StatCell label="Żółte" value={player.stats.yellow} />
+              <StatCell label="Czerwone" value={player.stats.red} />
+              <StatCell label="Gole/mecz" value={(player.stats.goals / Math.max(1, player.stats.apps)).toFixed(2)} />
+            </View>
+          </Card>
+        </View>
+
+        {/* Forma */}
+        <View>
+          <SectionTitle title="Forma (ostatnie mecze)" />
+          <Card>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <FormDots form={player.form} />
+              <Text style={{ color: c.textMuted, fontSize: font.small }}>
+                śr. {(player.form.reduce((s, v) => s + v, 0) / player.form.length).toFixed(1)}
+              </Text>
+            </View>
+          </Card>
+        </View>
+
+        {/* Rozwój */}
+        <View>
+          <SectionTitle title="Rozwój oceny ogólnej" />
+          <Card>
+            <MiniBars points={player.development} color={c.info} />
+          </Card>
+        </View>
 
         {/* Atrybuty */}
         <View>

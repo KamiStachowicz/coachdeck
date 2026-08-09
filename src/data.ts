@@ -1,4 +1,15 @@
-import type { Sport, Team, Player, CoachEvent, Payment, PaymentKind } from './types';
+import type {
+  Sport,
+  Team,
+  Player,
+  PlayerCore,
+  CoachEvent,
+  Payment,
+  PaymentKind,
+  FormationSlot,
+  StandingRow,
+  MatchResult,
+} from './types';
 
 export const SPORTS: Sport[] = [
   { id: 'football', name: 'Piłka nożna', icon: 'football-outline', color: '#059669', positions: ['Bramkarz', 'Obrońca', 'Pomocnik', 'Napastnik'] },
@@ -31,13 +42,98 @@ function p(
   number: number,
   position: string,
   birthYear: number,
-  ratings: Player['ratings'],
-  status: Player['status'] = 'available',
-): Player {
+  ratings: PlayerCore['ratings'],
+  status: PlayerCore['status'] = 'available',
+): PlayerCore {
   return { id, teamId, firstName, lastName, number, position, birthYear, ratings, status };
 }
 
-export const PLAYERS: Player[] = [
+export function overallOf(r: PlayerCore['ratings']): number {
+  return Math.round((r.fitness + r.technique + r.tactics + r.mentality) / 4);
+}
+
+/** Deterministyczny pseudolosowy 0–1 na podstawie tekstu (stabilny między odświeżeniami). */
+function seededRand(seed: string): () => number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return () => {
+    h += 0x6d2b79f5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const MONTHS = ['Wrz', 'Paź', 'Lis', 'Gru', 'Sty', 'Lut'];
+
+/** Uzupełnia zawodnika o atrybuty w stylu Football Managera (deterministycznie). */
+export function enrichPlayer(base: PlayerCore): Player {
+  const rnd = seededRand(base.id);
+  const overall = overallOf(base.ratings);
+  const age = base.birthYear ? new Date().getFullYear() - base.birthYear : 24;
+
+  // Potencjał: młodsi mają większy zapas.
+  const youthBonus = Math.max(0, 22 - Math.max(0, age - 16));
+  const potential = Math.min(99, overall + Math.round(youthBonus * (0.5 + rnd() * 0.6)));
+
+  const moraleRoll = rnd();
+  const morale: Player['morale'] =
+    base.status === 'injured' || base.status === 'suspended'
+      ? 'low'
+      : moraleRoll > 0.66
+        ? 'high'
+        : moraleRoll > 0.25
+          ? 'ok'
+          : 'low';
+
+  const condition =
+    base.status === 'injured' ? 25 + Math.round(rnd() * 20) : 80 + Math.round(rnd() * 20);
+
+  // Wartość rynkowa (zabawowo): rośnie z oceną i potencjałem, spada z wiekiem.
+  const value = Math.round(
+    (overall ** 2 * (1 + (potential - overall) / 40) * (age < 23 ? 1.4 : age > 30 ? 0.6 : 1)) * 90,
+  );
+
+  const apps = 4 + Math.floor(rnd() * 12);
+  const isFwd = (base.position ?? '').match(/Napastnik|skrzyd|Atakuj|Rozgryw/i);
+  const goals = isFwd ? Math.floor(rnd() * apps * 0.8) : Math.floor(rnd() * apps * 0.25);
+  const assists = Math.floor(rnd() * apps * 0.4);
+  const minutes = apps * (55 + Math.floor(rnd() * 35));
+  const yellow = Math.floor(rnd() * 4);
+  const red = rnd() > 0.9 ? 1 : 0;
+  const avgRating = Math.round((5.8 + (overall / 100) * 3.5 + rnd() * 0.4) * 10) / 10;
+
+  const form = Array.from({ length: 5 }, () => {
+    const v = avgRating + (rnd() - 0.5) * 2.2;
+    return Math.max(4, Math.min(10, Math.round(v * 10) / 10));
+  });
+
+  const development = MONTHS.map((label, i) => {
+    const progress = (i / (MONTHS.length - 1)) * Math.min(6, potential - overall + 3);
+    return { label, overall: Math.round(overall - (Math.min(6, potential - overall + 3) - progress)) };
+  });
+
+  const foot: Player['foot'] = rnd() > 0.85 ? 'both' : rnd() > 0.35 ? 'R' : 'L';
+
+  return {
+    ...base,
+    potential,
+    morale,
+    condition,
+    value,
+    foot,
+    captain: false,
+    stats: { apps, goals, assists, minutes, yellow, red, avgRating },
+    form,
+    development,
+  };
+}
+
+const RAW_PLAYERS: PlayerCore[] = [
   p('p1', 't1', 'Marek', 'Kowalski', 1, 'Bramkarz', 1998, { fitness: 78, technique: 72, tactics: 80, mentality: 85 }),
   p('p2', 't1', 'Jan', 'Nowak', 4, 'Obrońca', 1996, { fitness: 82, technique: 70, tactics: 78, mentality: 76 }),
   p('p3', 't1', 'Piotr', 'Wiśniewski', 8, 'Pomocnik', 1999, { fitness: 88, technique: 84, tactics: 82, mentality: 80 }),
@@ -48,6 +144,13 @@ export const PLAYERS: Player[] = [
   p('p8', 't3', 'Bartosz', 'Mazur', 23, 'Rozgrywający', 2005, { fitness: 80, technique: 82, tactics: 78, mentality: 79 }),
   p('p9', 't3', 'Filip', 'Krawczyk', 12, 'Środkowy', 2004, { fitness: 84, technique: 76, tactics: 74, mentality: 77 }, 'suspended'),
 ];
+
+export const PLAYERS: Player[] = RAW_PLAYERS.map(enrichPlayer);
+// Kapitanowie (po jednym na drużynę seniorską).
+for (const cap of ['p3', 'p8']) {
+  const pl = PLAYERS.find((x) => x.id === cap);
+  if (pl) pl.captain = true;
+}
 
 function daysFromNow(days: number, hour: number, min = 0): string {
   const d = new Date();
@@ -91,4 +194,85 @@ export const PAYMENTS: Payment[] = [
   { id: 'pay6', playerId: 'p7', teamId: 't2', kind: 'class', title: 'Dodatkowe zajęcia techniczne', amount: 60, dueDate: payDate(-1), paidDate: payDate(-1), status: 'paid' },
   { id: 'pay7', playerId: 'p8', teamId: 't3', kind: 'dues', title: 'Składka miesięczna', amount: 150, dueDate: payDate(5), status: 'pending' },
   { id: 'pay8', playerId: 'p9', teamId: 't3', kind: 'equipment', title: 'Komplet strojów', amount: 220, dueDate: payDate(-2), status: 'overdue' },
+];
+
+/* ---------- Taktyka: formacje ---------- */
+// y: 92 = własna bramka (dół), 8 = pole rywala (góra). x: 50 = środek.
+export const FORMATIONS: Record<string, FormationSlot[]> = {
+  '4-4-2': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'LO', x: 18, y: 72 },
+    { role: 'ŚO', x: 39, y: 76 },
+    { role: 'ŚO', x: 61, y: 76 },
+    { role: 'PO', x: 82, y: 72 },
+    { role: 'LP', x: 18, y: 46 },
+    { role: 'ŚP', x: 39, y: 50 },
+    { role: 'ŚP', x: 61, y: 50 },
+    { role: 'PP', x: 82, y: 46 },
+    { role: 'NA', x: 39, y: 22 },
+    { role: 'NA', x: 61, y: 22 },
+  ],
+  '4-3-3': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'LO', x: 18, y: 72 },
+    { role: 'ŚO', x: 39, y: 76 },
+    { role: 'ŚO', x: 61, y: 76 },
+    { role: 'PO', x: 82, y: 72 },
+    { role: 'ŚP', x: 30, y: 52 },
+    { role: 'ŚP', x: 50, y: 56 },
+    { role: 'ŚP', x: 70, y: 52 },
+    { role: 'LS', x: 20, y: 24 },
+    { role: 'NA', x: 50, y: 20 },
+    { role: 'PS', x: 80, y: 24 },
+  ],
+  '3-5-2': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'ŚO', x: 30, y: 76 },
+    { role: 'ŚO', x: 50, y: 78 },
+    { role: 'ŚO', x: 70, y: 76 },
+    { role: 'LW', x: 12, y: 50 },
+    { role: 'ŚP', x: 35, y: 54 },
+    { role: 'ŚP', x: 50, y: 58 },
+    { role: 'ŚP', x: 65, y: 54 },
+    { role: 'PW', x: 88, y: 50 },
+    { role: 'NA', x: 39, y: 22 },
+    { role: 'NA', x: 61, y: 22 },
+  ],
+  '4-2-3-1': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'LO', x: 18, y: 74 },
+    { role: 'ŚO', x: 39, y: 78 },
+    { role: 'ŚO', x: 61, y: 78 },
+    { role: 'PO', x: 82, y: 74 },
+    { role: 'DP', x: 38, y: 58 },
+    { role: 'DP', x: 62, y: 58 },
+    { role: 'LS', x: 20, y: 36 },
+    { role: 'OP', x: 50, y: 38 },
+    { role: 'PS', x: 80, y: 36 },
+    { role: 'NA', x: 50, y: 16 },
+  ],
+};
+
+export const FORMATION_NAMES = Object.keys(FORMATIONS);
+
+/* ---------- Liga: tabela i wyniki (dla drużyny seniorskiej t1) ---------- */
+
+export const STANDINGS: StandingRow[] = [
+  { teamId: 'r1', name: 'Legia II', played: 12, won: 9, drawn: 2, lost: 1, goalsFor: 28, goalsAgainst: 9, points: 29 },
+  { teamId: 'me', name: 'Orły Warszawa', played: 12, won: 8, drawn: 2, lost: 2, goalsFor: 25, goalsAgainst: 12, points: 26 },
+  { teamId: 'r2', name: 'Polonia', played: 12, won: 7, drawn: 3, lost: 2, goalsFor: 22, goalsAgainst: 14, points: 24 },
+  { teamId: 'r3', name: 'Znicz', played: 12, won: 6, drawn: 2, lost: 4, goalsFor: 19, goalsAgainst: 16, points: 20 },
+  { teamId: 'r4', name: 'Radomiak II', played: 12, won: 5, drawn: 3, lost: 4, goalsFor: 17, goalsAgainst: 15, points: 18 },
+  { teamId: 'r5', name: 'Ursus', played: 12, won: 4, drawn: 4, lost: 4, goalsFor: 15, goalsAgainst: 16, points: 16 },
+  { teamId: 'r6', name: 'Świt', played: 12, won: 3, drawn: 3, lost: 6, goalsFor: 12, goalsAgainst: 19, points: 12 },
+  { teamId: 'r7', name: 'Dolcan', played: 12, won: 2, drawn: 2, lost: 8, goalsFor: 10, goalsAgainst: 24, points: 8 },
+  { teamId: 'r8', name: 'Mazur', played: 12, won: 1, drawn: 2, lost: 9, goalsFor: 8, goalsAgainst: 31, points: 5 },
+];
+
+export const RESULTS: MatchResult[] = [
+  { id: 'm1', teamId: 't1', opponent: 'Polonia', date: payDate(-28), home: true, goalsFor: 3, goalsAgainst: 1, competition: 'Liga' },
+  { id: 'm2', teamId: 't1', opponent: 'Znicz', date: payDate(-21), home: false, goalsFor: 2, goalsAgainst: 2, competition: 'Liga' },
+  { id: 'm3', teamId: 't1', opponent: 'Ursus', date: payDate(-14), home: true, goalsFor: 1, goalsAgainst: 0, competition: 'Liga' },
+  { id: 'm4', teamId: 't1', opponent: 'Legia II', date: payDate(-7), home: false, goalsFor: 0, goalsAgainst: 2, competition: 'Liga' },
+  { id: 'm5', teamId: 't1', opponent: 'Świt', date: payDate(-3), home: true, goalsFor: 4, goalsAgainst: 1, competition: 'Puchar' },
 ];

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import type { Team, Player, CoachEvent, Payment } from './types';
-import { TEAMS, PLAYERS, EVENTS, PAYMENTS } from './data';
+import type { Team, Player, PlayerCore, CoachEvent, Payment, Lineup } from './types';
+import { TEAMS, PLAYERS, EVENTS, PAYMENTS, FORMATIONS, enrichPlayer } from './data';
 import { isBackendConfigured } from './config';
 import { supabase, fetchInitialData, fetchPayments, paymentToRow } from './supabase';
 
@@ -25,8 +25,10 @@ interface StoreValue {
   payments: Payment[];
   loading: boolean;
   backend: boolean;
-  addPlayer: (p: Omit<Player, 'id'>) => void;
+  addPlayer: (p: Omit<PlayerCore, 'id'>) => void;
   addEvent: (e: Omit<CoachEvent, 'id'>) => void;
+  getLineup: (teamId: string) => Lineup;
+  setLineup: (lineup: Lineup) => void;
   addPayment: (p: Omit<Payment, 'id'>) => void;
   markPaid: (id: string) => void;
   markUnpaid: (id: string) => void;
@@ -56,6 +58,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [players, setPlayers] = useState<Player[]>(PLAYERS);
   const [events, setEvents] = useState<CoachEvent[]>(EVENTS);
   const [payments, setPayments] = useState<Payment[]>(PAYMENTS.map(withComputedStatus));
+  const [lineups, setLineups] = useState<Record<string, Lineup>>({});
   const [loading, setLoading] = useState<boolean>(backend);
 
   // Ładowanie danych z bazy (tylko gdy backend skonfigurowany).
@@ -96,9 +99,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       backend,
       addPlayer: (p) => {
         const id = nextId('p');
-        setPlayers((prev) => [...prev, { ...p, id }]);
+        setPlayers((prev) => [...prev, enrichPlayer({ ...p, id })]);
         // Uwaga: zapis graczy do bazy dodamy przy pełnej migracji CRUD.
       },
+      getLineup: (teamId) => {
+        const existing = lineups[teamId];
+        if (existing) return existing;
+        const formation = '4-4-2';
+        return { teamId, formation, slots: FORMATIONS[formation].map(() => null), bench: [] };
+      },
+      setLineup: (lineup) => setLineups((prev) => ({ ...prev, [lineup.teamId]: lineup })),
       addEvent: (e) =>
         setEvents((prev) =>
           [...prev, { ...e, id: nextId('e') }].sort((a, b) => a.date.localeCompare(b.date)),
@@ -139,7 +149,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, loading, backend]);
+  }, [teams, players, events, payments, lineups, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

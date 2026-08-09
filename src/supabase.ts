@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, isBackendConfigured } from './config';
-import type { Team, Player, Payment } from './types';
+import type { Team, Player, PlayerCore, Payment } from './types';
+import { enrichPlayer } from './data';
 
 /**
  * Klient Supabase tworzony tylko, gdy podano klucze.
@@ -26,7 +27,7 @@ export function rowToTeam(r: any): Team {
 }
 
 export function rowToPlayer(r: any): Player {
-  return {
+  const core: PlayerCore = {
     id: r.id,
     teamId: r.team_id,
     firstName: r.first_name,
@@ -42,6 +43,8 @@ export function rowToPlayer(r: any): Player {
     },
     status: r.status ?? 'available',
   };
+  // Pola w stylu FM nie są (jeszcze) trzymane w bazie – wyliczamy je deterministycznie.
+  return enrichPlayer(core);
 }
 
 export function rowToPayment(r: any): Payment {

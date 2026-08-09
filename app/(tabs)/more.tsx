@@ -15,6 +15,7 @@ const MENU: {
   route?: string;
 }[] = [
   { icon: 'card-outline', label: 'Finanse i składki', hint: 'Opłaty, składki, zajęcia', route: '/finances' },
+  { icon: 'trophy-outline', label: 'Liga i wyniki', hint: 'Tabela ligowa i mecze', route: '/league' },
   { icon: 'stats-chart-outline', label: 'Statystyki', hint: 'Analizy formy i frekwencji' },
   { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Biblioteka ćwiczeń' },
   { icon: 'chatbubbles-outline', label: 'Komunikacja', hint: 'Wiadomości do drużyny' },

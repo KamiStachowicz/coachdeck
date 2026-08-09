@@ -274,4 +274,85 @@ export const paymentStatusMeta: Record<
   overdue: { label: 'Zaległe', color: '#DC2626', bg: '#FEE2E2' },
 };
 
+export const moraleMeta: Record<
+  'high' | 'ok' | 'low',
+  { label: string; color: string; icon: keyof typeof Ionicons.glyphMap }
+> = {
+  high: { label: 'Wysokie', color: '#059669', icon: 'happy-outline' },
+  ok: { label: 'Stabilne', color: '#D97706', icon: 'remove-circle-outline' },
+  low: { label: 'Niskie', color: '#DC2626', icon: 'sad-outline' },
+};
+
+/** Kolor oceny meczowej (1–10). */
+export function ratingColor10(v: number): string {
+  return v >= 7.5 ? '#059669' : v >= 6.5 ? '#F59E0B' : '#EF4444';
+}
+
+/** Ciąg kropek z ostatnią formą (oceny 1–10). */
+export function FormDots({ form }: { form: number[] }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 4 }}>
+      {form.map((v, i) => (
+        <View
+          key={i}
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: 6,
+            backgroundColor: ratingColor10(v),
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{Math.round(v)}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Mini-wykres słupkowy (rozwój oceny w czasie). */
+export function MiniBars({
+  points,
+  color,
+}: {
+  points: { label: string; overall: number }[];
+  color?: string;
+}) {
+  const c = useTheme();
+  const vals = points.map((p) => p.overall);
+  const min = Math.min(...vals) - 2;
+  const max = Math.max(...vals) + 1;
+  const range = Math.max(1, max - min);
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 90 }}>
+        {points.map((p, i) => {
+          const h = 16 + ((p.overall - min) / range) * 66;
+          return (
+            <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+              <Text style={{ color: c.textMuted, fontSize: 10, fontWeight: '700' }}>{p.overall}</Text>
+              <View
+                style={{
+                  width: '70%',
+                  height: h,
+                  backgroundColor: color ?? c.primary,
+                  borderRadius: 6,
+                }}
+              />
+            </View>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {points.map((p, i) => (
+          <Text key={i} style={{ flex: 1, textAlign: 'center', color: c.textMuted, fontSize: 10 }}>
+            {p.label}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export { TextStyle };

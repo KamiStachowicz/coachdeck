@@ -12,6 +12,11 @@ Jeden kod źródłowy → działa jako **apka na iOS/Android** i jako **strona w
 - 📊 **Pulpit** — podsumowanie: drużyny, zawodnicy, najbliższe wydarzenia, kontuzje
 - 🛡️ **Drużyny** — wiele drużyn i kategorii (Seniorzy, U-15, ...), różne dyscypliny
 - 👥 **Zawodnicy** — kadra, profile, atrybuty (kondycja/technika/taktyka/mentalność), status
+- 🎯 **Taktyka i skład** (jak Football Manager) — boisko z formacją (4-4-2, 4-3-3, 3-5-2,
+  4-2-3-1), ustawianie pierwszej jedenastki na pozycjach i ławki rezerwowych
+- 📈 **Statystyki i rozwój** — gole, asysty, minuty, kartki, średnia ocena, forma
+  (ostatnie mecze), morale, gotowość na mecz, potencjał, wartość rynkowa, wykres rozwoju
+- 🏆 **Liga i wyniki** — tabela ligowa (punkty, bramki, bilans) i historia meczów
 - 📅 **Kalendarz** — treningi i mecze, grupowane po dniach, dodawanie wydarzeń
 - 💰 **Finanse i składki** — składki miesięczne, opłaty za zajęcia/obozy/sprzęt,
   statusy (zapłacone / oczekujące / zaległe), oznaczanie „zapłacono" jednym kliknięciem,

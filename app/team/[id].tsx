@@ -13,9 +13,11 @@ import {
   StatTile,
   SectionTitle,
   EmptyState,
+  PrimaryButton,
   statusMeta,
   formatDate,
   formatTime,
+  formatMoney,
 } from '@/components/ui';
 
 export default function TeamDetail() {
@@ -70,6 +72,55 @@ export default function TeamDetail() {
           <StatTile label="Kontuzje" value={injured} icon="medkit-outline" tint={c.danger} />
           <StatTile label="Wydarzenia" value={events.length} icon="calendar-outline" tint={c.accent} />
         </View>
+
+        {/* Wartość kadry */}
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: c.text, fontWeight: '700' }}>Wartość kadry</Text>
+            <Text style={{ color: c.primary, fontWeight: '900', fontSize: font.h3 }}>
+              {formatMoney(roster.reduce((s, p) => s + p.value, 0))}
+            </Text>
+          </View>
+        </Card>
+
+        {/* Akcje */}
+        <View style={{ flexDirection: 'row', gap: spacing.md }}>
+          <PrimaryButton
+            label="Taktyka i skład"
+            icon="grid-outline"
+            onPress={() => router.push(`/tactics/${team.id}`)}
+            style={{ flex: 1 }}
+          />
+          <PrimaryButton
+            label="Liga"
+            icon="trophy-outline"
+            onPress={() => router.push('/league')}
+            style={{ flex: 1, backgroundColor: c.accent }}
+          />
+        </View>
+
+        {/* Najlepsi strzelcy */}
+        {roster.length > 0 ? (
+          <View>
+            <SectionTitle title="Najlepsi strzelcy" />
+            <Card style={{ gap: spacing.md }}>
+              {[...roster]
+                .sort((a, b) => b.stats.goals - a.stats.goals)
+                .slice(0, 3)
+                .map((p, i) => (
+                  <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                    <Text style={{ color: c.textMuted, fontWeight: '800', width: 18 }}>{i + 1}</Text>
+                    <Avatar first={p.firstName} last={p.lastName} size={34} color={sport.color} />
+                    <Text style={{ flex: 1, color: c.text, fontWeight: '600' }}>
+                      {p.firstName} {p.lastName}
+                    </Text>
+                    <Text style={{ color: c.text, fontWeight: '800' }}>{p.stats.goals} ⚽</Text>
+                    <Text style={{ color: c.textMuted, fontSize: font.small }}>{p.stats.assists} A</Text>
+                  </View>
+                ))}
+            </Card>
+          </View>
+        ) : null}
 
         {/* Kadra */}
         <View>
