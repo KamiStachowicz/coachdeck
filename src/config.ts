@@ -14,3 +14,10 @@ export const isBackendConfigured = (): boolean =>
 
 /** Czy płatności online (Przelewy24) są dostępne — wymagają backendu. */
 export const isOnlinePaymentsEnabled = (): boolean => isBackendConfigured();
+
+/**
+ * Klucz TheSportsDB (ligi zawodowe). Domyślnie darmowy klucz testowy '123'.
+ * Dla większej niezawodności załóż własny (Patreon) i ustaw EXPO_PUBLIC_THESPORTSDB_KEY.
+ */
+export const THESPORTSDB_KEY = process.env.EXPO_PUBLIC_THESPORTSDB_KEY ?? '123';
+

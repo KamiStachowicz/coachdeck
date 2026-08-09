@@ -16,7 +16,10 @@ Jeden kod źródłowy → działa jako **apka na iOS/Android** i jako **strona w
   4-2-3-1), ustawianie pierwszej jedenastki na pozycjach i ławki rezerwowych
 - 📈 **Statystyki i rozwój** — gole, asysty, minuty, kartki, średnia ocena, forma
   (ostatnie mecze), morale, gotowość na mecz, potencjał, wartość rynkowa, wykres rozwoju
-- 🏆 **Liga i wyniki** — tabela ligowa (punkty, bramki, bilans) i historia meczów
+- 🏆 **Liga i wyniki** — dwie zakładki:
+  - *Moja liga* — tabela i wyniki Twojej drużyny (dane własne)
+  - *Liga zawodowa* — automatyczne tabele i mecze prawdziwych lig z **TheSportsDB**
+    (Ekstraklasa, Premier League, La Liga, NBA... + wyszukiwarka lig po kraju)
 - 📅 **Kalendarz** — treningi i mecze, grupowane po dniach, dodawanie wydarzeń
 - 💰 **Finanse i składki** — składki miesięczne, opłaty za zajęcia/obozy/sprzęt,
   statusy (zapłacone / oczekujące / zaległe), oznaczanie „zapłacono" jednym kliknięciem,
@@ -103,6 +106,23 @@ supabase/functions/_shared/p24.ts      # podpisy SHA-384 + weryfikacja
 supabase/functions/p24-register/       # rejestracja transakcji
 supabase/functions/p24-webhook/        # webhook: potwierdzenie płatności
 ```
+
+## Ligi zawodowe (TheSportsDB) 🏟️
+
+Zakładka *Liga zawodowa* pobiera prawdziwe tabele i wyniki z
+[TheSportsDB](https://www.thesportsdb.com). Działa na darmowym kluczu testowym `123`,
+ale ma on ograniczenia (część endpointów, np. tabela/mecze, bywa limitowana).
+
+**Dla pełnej niezawodności** załóż własny klucz (Patreon TheSportsDB) i ustaw w `.env`:
+```
+EXPO_PUBLIC_THESPORTSDB_KEY=twoj_klucz
+```
+
+Uwaga: ligi **amatorskie i młodzieżowe** (U-15, klasa okręgowa itp.) zwykle **nie są**
+dostępne w żadnym publicznym API — do nich służy zakładka *Moja liga* (dane własne).
+Aplikacja obsługuje brak danych z API: pokazuje komunikat i nie blokuje reszty ekranu.
+
+Pliki: `src/sports/thesportsdb.ts` (serwis + mapowanie), `app/league.tsx` (ekran).
 
 ## Plan rozwoju
 
