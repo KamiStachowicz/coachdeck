@@ -32,6 +32,8 @@ export interface ProMatch {
   awayScore: number | null;
   date: string;
   league?: string;
+  homeBadge?: string;
+  awayBadge?: string;
 }
 
 /** Kandydujące sezony (bieżący i poprzedni) w formacie TheSportsDB. */
@@ -65,6 +67,7 @@ function mapRow(r: any): StandingRow {
     goalsFor: Number(r.intGoalsFor ?? 0),
     goalsAgainst: Number(r.intGoalsAgainst ?? 0),
     points: Number(r.intPoints ?? 0),
+    badge: r.strBadge ?? r.strTeamBadge ?? undefined,
   };
 }
 
@@ -95,6 +98,8 @@ export async function fetchPastEvents(leagueId: string): Promise<ProMatch[]> {
     awayScore: e.intAwayScore != null ? Number(e.intAwayScore) : null,
     date: e.dateEvent,
     league: e.strLeague,
+    homeBadge: e.strHomeTeamBadge ?? undefined,
+    awayBadge: e.strAwayTeamBadge ?? undefined,
   }));
 }
 

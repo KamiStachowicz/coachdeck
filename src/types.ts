@@ -139,6 +139,7 @@ export interface StandingRow {
   goalsFor: number;
   goalsAgainst: number;
   points: number;
+  badge?: string; // URL herbu (z API)
 }
 
 export interface MatchResult {
@@ -150,4 +151,56 @@ export interface MatchResult {
   goalsFor: number;
   goalsAgainst: number;
   competition?: string;
+}
+
+export interface Scorer {
+  playerId: string;
+  goals: number;
+  assists: number;
+}
+
+/** Dane wejściowe przy wpisywaniu wyniku meczu. */
+export interface MatchInput {
+  teamId: string;
+  opponent: string;
+  home: boolean;
+  goalsFor: number;
+  goalsAgainst: number;
+  competition?: string;
+  scorers: Scorer[];
+}
+
+/* ---------- Skauting i transfery ---------- */
+
+export interface ScoutTarget {
+  id: string;
+  firstName: string;
+  lastName: string;
+  position: string;
+  sport: SportId;
+  age: number;
+  overall: number;
+  potential: number;
+  value: number; // PLN
+  club: string;
+  ratings: PlayerRatings;
+  watched: boolean;
+}
+
+export interface Transfer {
+  id: string;
+  playerName: string;
+  direction: 'in' | 'out';
+  fee: number;
+  date: string;
+  club: string; // z/do jakiego klubu
+}
+
+/* ---------- Cele treningowe ---------- */
+
+export interface TrainingGoal {
+  id: string;
+  playerId: string;
+  text: string;
+  done: boolean;
 }

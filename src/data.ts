@@ -9,6 +9,8 @@ import type {
   FormationSlot,
   StandingRow,
   MatchResult,
+  ScoutTarget,
+  TrainingGoal,
 } from './types';
 
 export const SPORTS: Sport[] = [
@@ -275,4 +277,23 @@ export const RESULTS: MatchResult[] = [
   { id: 'm3', teamId: 't1', opponent: 'Ursus', date: payDate(-14), home: true, goalsFor: 1, goalsAgainst: 0, competition: 'Liga' },
   { id: 'm4', teamId: 't1', opponent: 'Legia II', date: payDate(-7), home: false, goalsFor: 0, goalsAgainst: 2, competition: 'Liga' },
   { id: 'm5', teamId: 't1', opponent: 'Świt', date: payDate(-3), home: true, goalsFor: 4, goalsAgainst: 1, competition: 'Puchar' },
+];
+
+/* ---------- Skauting: obserwowani zawodnicy ---------- */
+
+export const SCOUT_TARGETS: ScoutTarget[] = [
+  { id: 's1', firstName: 'Mateusz', lastName: 'Górski', position: 'Napastnik', sport: 'football', age: 19, overall: 78, potential: 88, value: 950000, club: 'Stal Rzeszów', ratings: { fitness: 82, technique: 80, tactics: 70, mentality: 79 }, watched: true },
+  { id: 's2', firstName: 'Dawid', lastName: 'Sikora', position: 'Pomocnik', sport: 'football', age: 21, overall: 75, potential: 82, value: 620000, club: 'Motor Lublin', ratings: { fitness: 78, technique: 79, tactics: 74, mentality: 70 }, watched: false },
+  { id: 's3', firstName: 'Oskar', lastName: 'Baran', position: 'Obrońca', sport: 'football', age: 18, overall: 71, potential: 86, value: 480000, club: 'Widzew II', ratings: { fitness: 80, technique: 66, tactics: 72, mentality: 68 }, watched: false },
+  { id: 's4', firstName: 'Nikodem', lastName: 'Pawlak', position: 'Bramkarz', sport: 'football', age: 22, overall: 76, potential: 80, value: 400000, club: 'GKS Katowice', ratings: { fitness: 74, technique: 70, tactics: 78, mentality: 82 }, watched: false },
+  { id: 's5', firstName: 'Szymon', lastName: 'Adamczyk', position: 'Rozgrywający', sport: 'basketball', age: 20, overall: 79, potential: 85, value: 300000, club: 'Anwil Junior', ratings: { fitness: 81, technique: 83, tactics: 76, mentality: 77 }, watched: false },
+];
+
+/* ---------- Cele treningowe (startowe) ---------- */
+
+export const TRAINING_GOALS: TrainingGoal[] = [
+  { id: 'g1', playerId: 'p4', text: 'Poprawa gry lewą nogą', done: false },
+  { id: 'g2', playerId: 'p4', text: 'Utrzymanie formy strzeleckiej', done: true },
+  { id: 'g3', playerId: 'p3', text: 'Rozwój przywództwa na boisku', done: false },
+  { id: 'g6', playerId: 'p6', text: 'Budowa siły i kondycji', done: false },
 ];

@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, View, Text, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -43,7 +43,9 @@ export default function PlayerDetail() {
   const c = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid } = useStore();
+  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal } =
+    useStore();
+  const [goalText, setGoalText] = useState('');
 
   const player = getPlayer(id);
   if (!player) {
@@ -202,6 +204,78 @@ export default function PlayerDetail() {
                 </View>
               );
             })}
+          </Card>
+        </View>
+
+        {/* Cele treningowe */}
+        <View>
+          <SectionTitle title="Cele treningowe" />
+          <Card style={{ gap: spacing.md }}>
+            {goalsByPlayer(player.id).length === 0 ? (
+              <Text style={{ color: c.textMuted, fontSize: font.small }}>Brak celów. Dodaj pierwszy poniżej.</Text>
+            ) : (
+              goalsByPlayer(player.id).map((g) => (
+                <View key={g.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                  <Pressable onPress={() => toggleGoal(g.id)}>
+                    <Ionicons
+                      name={g.done ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={22}
+                      color={g.done ? c.primary : c.tabInactive}
+                    />
+                  </Pressable>
+                  <Text
+                    style={{
+                      flex: 1,
+                      color: g.done ? c.textMuted : c.text,
+                      textDecorationLine: g.done ? 'line-through' : 'none',
+                      fontSize: font.small,
+                    }}
+                  >
+                    {g.text}
+                  </Text>
+                  <Pressable onPress={() => removeGoal(g.id)}>
+                    <Ionicons name="trash-outline" size={18} color={c.danger} />
+                  </Pressable>
+                </View>
+              ))
+            )}
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <TextInput
+                value={goalText}
+                onChangeText={setGoalText}
+                placeholder="Nowy cel treningowy…"
+                placeholderTextColor={c.tabInactive}
+                onSubmitEditing={() => {
+                  if (goalText.trim()) {
+                    addGoal(player.id, goalText.trim());
+                    setGoalText('');
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  backgroundColor: c.cardAlt,
+                  borderRadius: radius.md,
+                  padding: spacing.md,
+                  color: c.text,
+                }}
+              />
+              <Pressable
+                onPress={() => {
+                  if (goalText.trim()) {
+                    addGoal(player.id, goalText.trim());
+                    setGoalText('');
+                  }
+                }}
+                style={{
+                  paddingHorizontal: spacing.lg,
+                  justifyContent: 'center',
+                  borderRadius: radius.md,
+                  backgroundColor: c.primary,
+                }}
+              >
+                <Ionicons name="add" size={20} color={c.onPrimary} />
+              </Pressable>
+            </View>
           </Card>
         </View>
 

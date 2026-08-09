@@ -64,6 +64,8 @@ function RootLayoutNav() {
           <Stack.Screen name="finances" options={{ title: 'Finanse i składki' }} />
           <Stack.Screen name="tactics/[teamId]" options={{ title: 'Taktyka' }} />
           <Stack.Screen name="league" options={{ title: 'Liga i wyniki' }} />
+          <Stack.Screen name="result" options={{ title: 'Wynik meczu' }} />
+          <Stack.Screen name="scouting" options={{ title: 'Skauting i transfery' }} />
         </Stack>
       </ThemeProvider>
     </StoreProvider>

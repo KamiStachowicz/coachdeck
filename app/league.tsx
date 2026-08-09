@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator, TextInput } from 'react-native';
-import { Stack } from 'expo-router';
+import { ScrollView, View, Text, Pressable, ActivityIndicator, TextInput, Image } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { STANDINGS, RESULTS } from '@/src/data';
+import { useStore } from '@/src/store';
 import { useTheme, spacing, font, radius } from '@/src/theme';
-import { Card, Badge, SectionTitle, EmptyState, formatDate } from '@/components/ui';
+import { Card, Badge, SectionTitle, EmptyState, PrimaryButton, formatDate } from '@/components/ui';
 import type { StandingRow } from '@/src/types';
 import {
   LEAGUE_PRESETS,
@@ -65,16 +65,19 @@ export default function LeagueScreen() {
 
 function MyLeague() {
   const c = useTheme();
-  const sorted = [...STANDINGS].sort(
+  const router = useRouter();
+  const { standings, results } = useStore();
+  const sorted = [...standings].sort(
     (a, b) => b.points - a.points || b.goalsFor - b.goalsAgainst - (a.goalsFor - a.goalsAgainst),
   );
   return (
     <>
+      <PrimaryButton label="Dodaj wynik meczu" icon="add" onPress={() => router.push('/result')} />
       <StandingsTable rows={sorted} highlightId="me" />
       <View>
         <SectionTitle title="Ostatnie mecze" />
         <View style={{ gap: spacing.md }}>
-          {[...RESULTS].reverse().map((m) => {
+          {[...results].reverse().map((m) => {
             const win = m.goalsFor > m.goalsAgainst;
             const draw = m.goalsFor === m.goalsAgainst;
             const resultColor = win ? c.primary : draw ? c.warning : c.danger;
@@ -257,15 +260,25 @@ function ProLeague() {
                 {events.map((m) => (
                   <Card key={m.id}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={{ color: c.text, flex: 1, fontWeight: '600' }} numberOfLines={1}>
-                        {m.home}
-                      </Text>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        {m.homeBadge ? (
+                          <Image source={{ uri: m.homeBadge }} style={{ width: 18, height: 18 }} resizeMode="contain" />
+                        ) : null}
+                        <Text style={{ color: c.text, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>
+                          {m.home}
+                        </Text>
+                      </View>
                       <Text style={{ color: c.text, fontWeight: '900', marginHorizontal: spacing.md }}>
                         {m.homeScore ?? '-'} : {m.awayScore ?? '-'}
                       </Text>
-                      <Text style={{ color: c.text, flex: 1, textAlign: 'right', fontWeight: '600' }} numberOfLines={1}>
-                        {m.away}
-                      </Text>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                        <Text style={{ color: c.text, fontWeight: '600', flexShrink: 1, textAlign: 'right' }} numberOfLines={1}>
+                          {m.away}
+                        </Text>
+                        {m.awayBadge ? (
+                          <Image source={{ uri: m.awayBadge }} style={{ width: 18, height: 18 }} resizeMode="contain" />
+                        ) : null}
+                      </View>
                     </View>
                   </Card>
                 ))}
@@ -315,6 +328,9 @@ function StandingsTable({ rows, highlightId }: { rows: StandingRow[]; highlightI
             }}
           >
             <Text style={{ width: 24, color: posColor, fontWeight: '800', fontSize: font.small }}>{pos}</Text>
+            {row.badge ? (
+              <Image source={{ uri: row.badge }} style={{ width: 18, height: 18, marginRight: 6 }} resizeMode="contain" />
+            ) : null}
             <Text style={{ flex: 1, color: c.text, fontWeight: me ? '800' : '600', fontSize: font.small }} numberOfLines={1}>
               {row.name}
             </Text>
