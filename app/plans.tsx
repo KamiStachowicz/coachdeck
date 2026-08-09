@@ -27,13 +27,13 @@ const FEATURE_ORDER: FeatureKey[] = [
 
 export default function PlansScreen() {
   const c = useTheme();
-  const { currentPlan, setPlan } = useStore();
+  const { currentPlan, setPlan, trialActive, trialDaysLeft } = useStore();
   const online = isOnlinePaymentsEnabled();
 
   const choose = async (planId: string, name: string) => {
     const price = getPlan(planId as any).price;
-    // Plan darmowy lub brak podłączonego P24 → aktywacja lokalna (demo).
-    if (price === 0 || !online) {
+    // Brak podłączonego P24 → aktywacja lokalna (demo).
+    if (!online) {
       setPlan(planId as any);
       if (Platform.OS !== 'web') {
         Alert.alert('Plan wybrany', `Plan ${name} aktywny (demo). Płatności podłączymy przez Przelewy24.`);
@@ -59,6 +59,30 @@ export default function PlansScreen() {
             Odblokuj pełnię możliwości CoachDeck. Anuluj w dowolnym momencie.
           </Text>
         </View>
+
+        {/* Baner okresu próbnego */}
+        {trialActive ? (
+          <Card style={{ backgroundColor: c.accent }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <Ionicons name="gift-outline" size={26} color="#fff" />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: font.body }}>
+                  Darmowy okres próbny: {trialDaysLeft} dni
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: font.small }}>
+                  Pełny dostęp. Wybierz plan, aby korzystać dalej po jego zakończeniu.
+                </Text>
+              </View>
+            </View>
+          </Card>
+        ) : currentPlan === null ? (
+          <Card style={{ backgroundColor: c.danger }}>
+            <Text style={{ color: '#fff', fontWeight: '800' }}>Okres próbny zakończony</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: font.small, marginTop: 2 }}>
+              Wybierz plan, aby odblokować funkcje premium.
+            </Text>
+          </Card>
+        ) : null}
 
         {PLANS.map((plan) => {
           const active = currentPlan === plan.id;

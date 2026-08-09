@@ -3,7 +3,10 @@
  * Model monetyzacji CoachDeck.
  */
 
-export type PlanId = 'free' | 'pro' | 'club' | 'premium';
+export type PlanId = 'pro' | 'club' | 'premium';
+
+/** Długość darmowego okresu próbnego (dni). */
+export const TRIAL_DAYS = 30;
 
 export type FeatureKey =
   | 'tactics'
@@ -48,15 +51,6 @@ const clubUnlocks: FeatureKey[] = [...proUnlocks, 'onlinePayments', 'reports', '
 const premiumUnlocks: FeatureKey[] = [...clubUnlocks, 'whiteLabel', 'prioritySupport'];
 
 export const PLANS: Plan[] = [
-  {
-    id: 'free',
-    name: 'Darmowy',
-    price: 0,
-    tagline: 'Na start – jedna drużyna',
-    color: '#64748B',
-    limits: { teams: 1, playersPerTeam: 15, coaches: 1 },
-    unlocks: [],
-  },
   {
     id: 'pro',
     name: 'Trener PRO',
@@ -108,5 +102,5 @@ export const PLATFORM_SUBSCRIPTIONS: { club: string; plan: PlanId }[] = [
   { club: 'UKS Sokół', plan: 'pro' },
   { club: 'MKS Basket', plan: 'pro' },
   { club: 'Gwardia', plan: 'club' },
-  { club: 'Talent SC', plan: 'free' },
+  { club: 'Talent SC', plan: 'pro' },
 ];

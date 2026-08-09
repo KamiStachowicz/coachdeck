@@ -27,7 +27,7 @@ import {
 } from './data';
 import { isBackendConfigured } from './config';
 import { supabase, fetchInitialData, fetchPayments, paymentToRow } from './supabase';
-import { getPlan, type PlanId, type FeatureKey } from './plans';
+import { getPlan, TRIAL_DAYS, type PlanId, type FeatureKey } from './plans';
 
 /**
  * Magazyn stanu aplikacji.
@@ -65,7 +65,9 @@ interface StoreValue {
   addGoal: (playerId: string, text: string) => void;
   toggleGoal: (goalId: string) => void;
   removeGoal: (goalId: string) => void;
-  currentPlan: PlanId;
+  currentPlan: PlanId | null; // aktywna subskrypcja (null = brak, np. w okresie próbnym)
+  trialActive: boolean;
+  trialDaysLeft: number;
   setPlan: (plan: PlanId) => void;
   hasFeature: (key: FeatureKey) => boolean;
   addPayment: (p: Omit<Payment, 'id'>) => void;
@@ -103,7 +105,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [scoutTargets, setScoutTargets] = useState<ScoutTarget[]>(SCOUT_TARGETS);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [goals, setGoals] = useState<TrainingGoal[]>(TRAINING_GOALS);
-  const [currentPlan, setCurrentPlan] = useState<PlanId>('free');
+  const [subscribedPlan, setSubscribedPlan] = useState<PlanId | null>(null);
+  const [trialEndsAt] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + TRIAL_DAYS);
+    return d.toISOString();
+  });
   const [loading, setLoading] = useState<boolean>(backend);
 
   // Ładowanie danych z bazy (tylko gdy backend skonfigurowany).
@@ -134,6 +141,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const collected = payments.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
     const pending = payments.filter((p) => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
     const overdue = payments.filter((p) => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
+
+    const trialMs = new Date(trialEndsAt).getTime() - Date.now();
+    const trialActive = !subscribedPlan && trialMs > 0;
+    const trialDaysLeft = Math.max(0, Math.ceil(trialMs / 86400000));
 
     return {
       teams,
@@ -255,9 +266,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleGoal: (goalId) =>
         setGoals((prev) => prev.map((g) => (g.id === goalId ? { ...g, done: !g.done } : g))),
       removeGoal: (goalId) => setGoals((prev) => prev.filter((g) => g.id !== goalId)),
-      currentPlan,
-      setPlan: (plan) => setCurrentPlan(plan),
-      hasFeature: (key) => getPlan(currentPlan).unlocks.includes(key),
+      currentPlan: subscribedPlan,
+      trialActive,
+      trialDaysLeft,
+      setPlan: (plan) => setSubscribedPlan(plan),
+      // W okresie próbnym pełny dostęp; po nim tylko funkcje wykupionego planu.
+      hasFeature: (key) =>
+        trialActive ? true : subscribedPlan ? getPlan(subscribedPlan).unlocks.includes(key) : false,
       addEvent: (e) =>
         setEvents((prev) =>
           [...prev, { ...e, id: nextId('e') }].sort((a, b) => a.date.localeCompare(b.date)),
@@ -298,7 +313,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, currentPlan, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, subscribedPlan, trialEndsAt, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

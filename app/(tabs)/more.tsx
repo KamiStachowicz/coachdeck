@@ -28,8 +28,14 @@ const MENU: {
 export default function MoreScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { financeSummary, currentPlan } = useStore();
-  const plan = getPlan(currentPlan);
+  const { financeSummary, currentPlan, trialActive, trialDaysLeft } = useStore();
+  const plan = currentPlan ? getPlan(currentPlan) : null;
+  const planLabel = trialActive
+    ? `Okres próbny · ${trialDaysLeft} dni`
+    : plan
+      ? `Plan: ${plan.name}`
+      : 'Brak aktywnego planu';
+  const planColor = trialActive ? c.accent : plan ? plan.color : c.danger;
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
@@ -53,7 +59,7 @@ export default function MoreScreen() {
           <View style={{ flex: 1 }}>
             <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>Trener</Text>
             <View style={{ flexDirection: 'row', marginTop: 4 }}>
-              <Badge label={`Plan: ${plan.name}`} color={plan.color} bg={plan.color + '22'} />
+              <Badge label={planLabel} color={planColor} bg={planColor + '22'} />
             </View>
           </View>
         </View>
@@ -65,7 +71,11 @@ export default function MoreScreen() {
           <Ionicons name="rocket-outline" size={26} color="#fff" />
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: font.body }}>
-              {currentPlan === 'premium' ? 'Masz najwyższy plan 🎉' : 'Odblokuj więcej z planem'}
+              {trialActive
+                ? `Okres próbny: ${trialDaysLeft} dni`
+                : currentPlan === 'premium'
+                  ? 'Masz najwyższy plan 🎉'
+                  : 'Wybierz plan, by kontynuować'}
             </Text>
             <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: font.small }}>
               Plany i cennik · taktyka, płatności, skauting
