@@ -68,6 +68,7 @@ function RootLayoutNav() {
           <Stack.Screen name="scouting" options={{ title: 'Skauting i transfery' }} />
           <Stack.Screen name="plans" options={{ title: 'Plany i cennik' }} />
           <Stack.Screen name="revenue" options={{ title: 'Panel przychodów' }} />
+          <Stack.Screen name="card/[id]" options={{ title: 'Karta zawodnika' }} />
         </Stack>
       </ThemeProvider>
     </StoreProvider>
