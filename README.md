@@ -54,14 +54,63 @@ src/
   store.tsx          # magazyn stanu (Context)
 ```
 
+## Płatności online (Przelewy24) 💳
+
+Aplikacja ma **gotową integrację z Przelewy24** (BLIK, karty, przelewy), uśpioną do
+czasu podania kluczy. Bez konfiguracji apka działa w trybie **DEMO** (składki oznaczasz
+ręcznie). Po podaniu kluczy pojawia się przycisk **„Zapłać online"**, a potwierdzenia
+płatności trafiają automatycznie do aplikacji (webhook P24 → baza → apka).
+
+**Architektura:** aplikacja → funkcja `p24-register` (Supabase) → P24 → webhook
+`p24-webhook` (Supabase) weryfikuje płatność → oznacza składkę jako opłaconą.
+
+### Jak uruchomić (checklist)
+
+1. **Supabase** – załóż darmowy projekt na [supabase.com](https://supabase.com).
+2. **Baza** – w SQL Editor uruchom `supabase/migrations/0001_init.sql`.
+3. **Klient** – skopiuj `.env.example` → `.env` i wpisz `EXPO_PUBLIC_SUPABASE_URL`
+   oraz `EXPO_PUBLIC_SUPABASE_ANON_KEY` (z ustawień projektu Supabase → API).
+4. **Konto Przelewy24** – zarejestruj się, zdobądź: `MerchantId`, `PosId`, `CRC`,
+   `klucz do raportów (API key)`. Na testy użyj **sandboxa** P24.
+5. **Sekrety P24 w Supabase** (nie w kodzie!):
+   ```bash
+   supabase secrets set P24_MERCHANT_ID=xxxxx P24_POS_ID=xxxxx \
+     P24_CRC=xxxxx P24_API_KEY=xxxxx P24_SANDBOX=true
+   ```
+6. **Wdróż funkcje brzegowe:**
+   ```bash
+   supabase functions deploy p24-register
+   supabase functions deploy p24-webhook --no-verify-jwt   # webhook musi być publiczny
+   ```
+7. **Test na sandboxie** – kliknij „Zapłać online", opłać testowo, sprawdź, że składka
+   zmienia status na „Zapłacone".
+8. **Produkcja** – ustaw `P24_SANDBOX=false` i wdróż funkcje ponownie.
+
+> Prowizja P24 to ok. 1,9% od wpłaty. Development na sandboxie jest darmowy.
+
+Pliki integracji:
+```
+src/config.ts                          # odczyt kluczy (EXPO_PUBLIC_*)
+src/supabase.ts                        # klient + mapowanie danych
+src/payments/online.ts                 # start płatności z aplikacji
+supabase/migrations/0001_init.sql      # schemat bazy + RLS + dane startowe
+supabase/functions/_shared/p24.ts      # podpisy SHA-384 + weryfikacja
+supabase/functions/p24-register/       # rejestracja transakcji
+supabase/functions/p24-webhook/        # webhook: potwierdzenie płatności
+```
+
 ## Plan rozwoju
 
-- [ ] Backend + logowanie (Supabase / Firebase – darmowe plany)
+- [x] Moduł składek/finansów klubu
+- [x] Integracja płatności online (Przelewy24) – gotowa do podpięcia kluczy
+- [x] Backend danych (Supabase) – warstwa płatności
+- [ ] Logowanie i konta (Supabase Auth) + zaostrzenie reguł RLS
+- [ ] Pełna migracja CRUD (drużyny/zawodnicy/wydarzenia) do bazy
+- [ ] E-mail płatnika (opiekuna) pobierany z profilu zawodnika
 - [ ] Frekwencja na treningach i statystyki formy
 - [ ] Wybór daty/godziny wydarzenia
-- [ ] Powiadomienia push (przypomnienia o treningach/meczach)
+- [ ] Powiadomienia push (przypomnienia o treningach, zaległych składkach)
 - [ ] Komunikacja z drużyną i rodzicami
-- [ ] Moduł składek/finansów klubu
 - [ ] Publikacja w App Store / Google Play
 
 ---

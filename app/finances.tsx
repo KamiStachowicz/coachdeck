@@ -17,15 +17,25 @@ import {
   formatDate,
   paymentStatusMeta,
 } from '@/components/ui';
-import type { PaymentStatus } from '@/src/types';
+import type { Payment, PaymentStatus } from '@/src/types';
+import { isOnlinePaymentsEnabled } from '@/src/config';
+import { startOnlinePayment } from '@/src/payments/online';
 
 type Filter = 'all' | PaymentStatus;
 
 export default function FinancesScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { payments, getPlayer, getTeam, markPaid, markUnpaid, financeSummary } = useStore();
+  const { payments, getPlayer, getTeam, markPaid, markUnpaid, refreshPayments, financeSummary } =
+    useStore();
   const [filter, setFilter] = useState<Filter>('all');
+  const onlineEnabled = isOnlinePaymentsEnabled();
+
+  const payOnline = async (pay: Payment) => {
+    // W produkcji przekaż tu e-mail płatnika (np. rodzica/opiekuna).
+    const res = await startOnlinePayment(pay, 'platnik@coachdeck.app');
+    if (res.ok) await refreshPayments();
+  };
 
   const sorted = useMemo(
     () =>
@@ -137,6 +147,25 @@ export default function FinancesScreen() {
                       <Text style={{ color: c.text, fontWeight: '900', fontSize: font.h3 }}>
                         {formatMoney(pay.amount)}
                       </Text>
+                      {onlineEnabled && !paid ? (
+                        <Pressable
+                          onPress={() => payOnline(pay)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                            paddingHorizontal: spacing.sm,
+                            paddingVertical: 6,
+                            borderRadius: radius.pill,
+                            backgroundColor: c.info,
+                          }}
+                        >
+                          <Ionicons name="card-outline" size={14} color="#fff" />
+                          <Text style={{ color: '#fff', fontWeight: '700', fontSize: font.tiny }}>
+                            Zapłać online
+                          </Text>
+                        </Pressable>
+                      ) : null}
                       <Pressable
                         onPress={() => (paid ? markUnpaid(pay.id) : markPaid(pay.id))}
                         style={{
