@@ -1,0 +1,299 @@
+import type {
+  Sport,
+  Team,
+  Player,
+  PlayerCore,
+  CoachEvent,
+  Payment,
+  PaymentKind,
+  FormationSlot,
+  StandingRow,
+  MatchResult,
+  ScoutTarget,
+  TrainingGoal,
+} from './types';
+
+export const SPORTS: Sport[] = [
+  { id: 'football', name: 'Piłka nożna', icon: 'football-outline', color: '#059669', positions: ['Bramkarz', 'Obrońca', 'Pomocnik', 'Napastnik'] },
+  { id: 'basketball', name: 'Koszykówka', icon: 'basketball-outline', color: '#EA580C', positions: ['Rozgrywający', 'Rzucający obrońca', 'Niski skrzydłowy', 'Silny skrzydłowy', 'Środkowy'] },
+  { id: 'volleyball', name: 'Siatkówka', icon: 'tennisball-outline', color: '#2563EB', positions: ['Rozgrywający', 'Atakujący', 'Środkowy', 'Przyjmujący', 'Libero'] },
+  { id: 'handball', name: 'Piłka ręczna', icon: 'hand-left-outline', color: '#7C3AED', positions: ['Bramkarz', 'Skrzydłowy', 'Rozgrywający', 'Obrotowy'] },
+  { id: 'tennis', name: 'Tenis', icon: 'tennisball-outline', color: '#CA8A04', positions: ['Singiel', 'Debel'] },
+  { id: 'athletics', name: 'Lekkoatletyka', icon: 'walk-outline', color: '#DB2777', positions: ['Sprint', 'Średnie', 'Długie', 'Skoki', 'Rzuty'] },
+  { id: 'swimming', name: 'Pływanie', icon: 'water-outline', color: '#0891B2', positions: ['Kraul', 'Grzbiet', 'Klasyk', 'Motylek'] },
+  { id: 'hockey', name: 'Hokej', icon: 'snow-outline', color: '#4F46E5', positions: ['Bramkarz', 'Obrońca', 'Napastnik'] },
+];
+
+export function getSport(id: string) {
+  return SPORTS.find((s) => s.id === id) ?? SPORTS[0];
+}
+
+export const SEASON = '2025/2026';
+
+export const TEAMS: Team[] = [
+  { id: 't1', name: 'Orły Warszawa', sport: 'football', category: 'Seniorzy', season: SEASON, colorAccent: '#059669' },
+  { id: 't2', name: 'Orlęta U-15', sport: 'football', category: 'U-15', season: SEASON, colorAccent: '#10B981' },
+  { id: 't3', name: 'Wisła Basket', sport: 'basketball', category: 'Juniorzy', season: SEASON, colorAccent: '#EA580C' },
+];
+
+function p(
+  id: string,
+  teamId: string,
+  firstName: string,
+  lastName: string,
+  number: number,
+  position: string,
+  birthYear: number,
+  ratings: PlayerCore['ratings'],
+  status: PlayerCore['status'] = 'available',
+): PlayerCore {
+  return { id, teamId, firstName, lastName, number, position, birthYear, ratings, status };
+}
+
+export function overallOf(r: PlayerCore['ratings']): number {
+  return Math.round((r.fitness + r.technique + r.tactics + r.mentality) / 4);
+}
+
+/** Deterministyczny pseudolosowy 0–1 na podstawie tekstu (stabilny między odświeżeniami). */
+function seededRand(seed: string): () => number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return () => {
+    h += 0x6d2b79f5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const MONTHS = ['Wrz', 'Paź', 'Lis', 'Gru', 'Sty', 'Lut'];
+
+/** Uzupełnia zawodnika o atrybuty w stylu Football Managera (deterministycznie). */
+export function enrichPlayer(base: PlayerCore): Player {
+  const rnd = seededRand(base.id);
+  const overall = overallOf(base.ratings);
+  const age = base.birthYear ? new Date().getFullYear() - base.birthYear : 24;
+
+  // Potencjał: młodsi mają większy zapas.
+  const youthBonus = Math.max(0, 22 - Math.max(0, age - 16));
+  const potential = Math.min(99, overall + Math.round(youthBonus * (0.5 + rnd() * 0.6)));
+
+  const moraleRoll = rnd();
+  const morale: Player['morale'] =
+    base.status === 'injured' || base.status === 'suspended'
+      ? 'low'
+      : moraleRoll > 0.66
+        ? 'high'
+        : moraleRoll > 0.25
+          ? 'ok'
+          : 'low';
+
+  const condition =
+    base.status === 'injured' ? 25 + Math.round(rnd() * 20) : 80 + Math.round(rnd() * 20);
+
+  // Wartość rynkowa (zabawowo): rośnie z oceną i potencjałem, spada z wiekiem.
+  const value = Math.round(
+    (overall ** 2 * (1 + (potential - overall) / 40) * (age < 23 ? 1.4 : age > 30 ? 0.6 : 1)) * 90,
+  );
+
+  const apps = 4 + Math.floor(rnd() * 12);
+  const isFwd = (base.position ?? '').match(/Napastnik|skrzyd|Atakuj|Rozgryw/i);
+  const goals = isFwd ? Math.floor(rnd() * apps * 0.8) : Math.floor(rnd() * apps * 0.25);
+  const assists = Math.floor(rnd() * apps * 0.4);
+  const minutes = apps * (55 + Math.floor(rnd() * 35));
+  const yellow = Math.floor(rnd() * 4);
+  const red = rnd() > 0.9 ? 1 : 0;
+  const avgRating = Math.round((5.8 + (overall / 100) * 3.5 + rnd() * 0.4) * 10) / 10;
+
+  const form = Array.from({ length: 5 }, () => {
+    const v = avgRating + (rnd() - 0.5) * 2.2;
+    return Math.max(4, Math.min(10, Math.round(v * 10) / 10));
+  });
+
+  const development = MONTHS.map((label, i) => {
+    const progress = (i / (MONTHS.length - 1)) * Math.min(6, potential - overall + 3);
+    return { label, overall: Math.round(overall - (Math.min(6, potential - overall + 3) - progress)) };
+  });
+
+  const foot: Player['foot'] = rnd() > 0.85 ? 'both' : rnd() > 0.35 ? 'R' : 'L';
+
+  return {
+    ...base,
+    potential,
+    morale,
+    condition,
+    value,
+    foot,
+    captain: false,
+    stats: { apps, goals, assists, minutes, yellow, red, avgRating },
+    form,
+    development,
+  };
+}
+
+const RAW_PLAYERS: PlayerCore[] = [
+  p('p1', 't1', 'Marek', 'Kowalski', 1, 'Bramkarz', 1998, { fitness: 78, technique: 72, tactics: 80, mentality: 85 }),
+  p('p2', 't1', 'Jan', 'Nowak', 4, 'Obrońca', 1996, { fitness: 82, technique: 70, tactics: 78, mentality: 76 }),
+  p('p3', 't1', 'Piotr', 'Wiśniewski', 8, 'Pomocnik', 1999, { fitness: 88, technique: 84, tactics: 82, mentality: 80 }),
+  p('p4', 't1', 'Tomasz', 'Lewandowski', 9, 'Napastnik', 2000, { fitness: 90, technique: 89, tactics: 76, mentality: 88 }),
+  p('p5', 't1', 'Adam', 'Zieliński', 11, 'Napastnik', 2001, { fitness: 85, technique: 80, tactics: 72, mentality: 75 }, 'injured'),
+  p('p6', 't2', 'Kacper', 'Wójcik', 7, 'Pomocnik', 2010, { fitness: 70, technique: 68, tactics: 60, mentality: 72 }),
+  p('p7', 't2', 'Igor', 'Kamiński', 10, 'Napastnik', 2010, { fitness: 74, technique: 75, tactics: 58, mentality: 70 }),
+  p('p8', 't3', 'Bartosz', 'Mazur', 23, 'Rozgrywający', 2005, { fitness: 80, technique: 82, tactics: 78, mentality: 79 }),
+  p('p9', 't3', 'Filip', 'Krawczyk', 12, 'Środkowy', 2004, { fitness: 84, technique: 76, tactics: 74, mentality: 77 }, 'suspended'),
+];
+
+export const PLAYERS: Player[] = RAW_PLAYERS.map(enrichPlayer);
+// Kapitanowie (po jednym na drużynę seniorską).
+for (const cap of ['p3', 'p8']) {
+  const pl = PLAYERS.find((x) => x.id === cap);
+  if (pl) pl.captain = true;
+}
+
+function daysFromNow(days: number, hour: number, min = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(hour, min, 0, 0);
+  return d.toISOString();
+}
+
+export const EVENTS: CoachEvent[] = [
+  { id: 'e1', teamId: 't1', type: 'training', title: 'Trening – taktyka', date: daysFromNow(0, 18), location: 'Boisko główne' },
+  { id: 'e2', teamId: 't1', type: 'match', title: 'Mecz ligowy', date: daysFromNow(2, 16), location: 'Stadion miejski', opponent: 'Legia II' },
+  { id: 'e3', teamId: 't2', type: 'training', title: 'Trening – technika', date: daysFromNow(1, 17), location: 'Orlik' },
+  { id: 'e4', teamId: 't3', type: 'match', title: 'Puchar – 1/8 finału', date: daysFromNow(3, 19), location: 'Hala Sportowa', opponent: 'Zagłębie' },
+  { id: 'e5', teamId: 't1', type: 'training', title: 'Trening – kondycja', date: daysFromNow(4, 18), location: 'Boisko boczne' },
+];
+
+export const PAYMENT_KINDS: Record<
+  PaymentKind,
+  { label: string; icon: string; color: string }
+> = {
+  dues: { label: 'Składka', icon: 'repeat-outline', color: '#059669' },
+  class: { label: 'Zajęcia', icon: 'barbell-outline', color: '#3B82F6' },
+  camp: { label: 'Obóz', icon: 'bonfire-outline', color: '#F97316' },
+  equipment: { label: 'Sprzęt', icon: 'shirt-outline', color: '#7C3AED' },
+  other: { label: 'Inne', icon: 'cash-outline', color: '#64748B' },
+};
+
+function payDate(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(12, 0, 0, 0);
+  return d.toISOString();
+}
+
+export const PAYMENTS: Payment[] = [
+  { id: 'pay1', playerId: 'p1', teamId: 't1', kind: 'dues', title: 'Składka miesięczna', amount: 120, dueDate: payDate(-5), paidDate: payDate(-6), status: 'paid' },
+  { id: 'pay2', playerId: 'p2', teamId: 't1', kind: 'dues', title: 'Składka miesięczna', amount: 120, dueDate: payDate(3), status: 'pending' },
+  { id: 'pay3', playerId: 'p3', teamId: 't1', kind: 'dues', title: 'Składka miesięczna', amount: 120, dueDate: payDate(-8), status: 'overdue' },
+  { id: 'pay4', playerId: 'p4', teamId: 't1', kind: 'camp', title: 'Obóz letni – zaliczka', amount: 400, dueDate: payDate(10), status: 'pending' },
+  { id: 'pay5', playerId: 'p6', teamId: 't2', kind: 'dues', title: 'Składka miesięczna', amount: 90, dueDate: payDate(-3), status: 'overdue' },
+  { id: 'pay6', playerId: 'p7', teamId: 't2', kind: 'class', title: 'Dodatkowe zajęcia techniczne', amount: 60, dueDate: payDate(-1), paidDate: payDate(-1), status: 'paid' },
+  { id: 'pay7', playerId: 'p8', teamId: 't3', kind: 'dues', title: 'Składka miesięczna', amount: 150, dueDate: payDate(5), status: 'pending' },
+  { id: 'pay8', playerId: 'p9', teamId: 't3', kind: 'equipment', title: 'Komplet strojów', amount: 220, dueDate: payDate(-2), status: 'overdue' },
+];
+
+/* ---------- Taktyka: formacje ---------- */
+// y: 92 = własna bramka (dół), 8 = pole rywala (góra). x: 50 = środek.
+export const FORMATIONS: Record<string, FormationSlot[]> = {
+  '4-4-2': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'LO', x: 18, y: 72 },
+    { role: 'ŚO', x: 39, y: 76 },
+    { role: 'ŚO', x: 61, y: 76 },
+    { role: 'PO', x: 82, y: 72 },
+    { role: 'LP', x: 18, y: 46 },
+    { role: 'ŚP', x: 39, y: 50 },
+    { role: 'ŚP', x: 61, y: 50 },
+    { role: 'PP', x: 82, y: 46 },
+    { role: 'NA', x: 39, y: 22 },
+    { role: 'NA', x: 61, y: 22 },
+  ],
+  '4-3-3': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'LO', x: 18, y: 72 },
+    { role: 'ŚO', x: 39, y: 76 },
+    { role: 'ŚO', x: 61, y: 76 },
+    { role: 'PO', x: 82, y: 72 },
+    { role: 'ŚP', x: 30, y: 52 },
+    { role: 'ŚP', x: 50, y: 56 },
+    { role: 'ŚP', x: 70, y: 52 },
+    { role: 'LS', x: 20, y: 24 },
+    { role: 'NA', x: 50, y: 20 },
+    { role: 'PS', x: 80, y: 24 },
+  ],
+  '3-5-2': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'ŚO', x: 30, y: 76 },
+    { role: 'ŚO', x: 50, y: 78 },
+    { role: 'ŚO', x: 70, y: 76 },
+    { role: 'LW', x: 12, y: 50 },
+    { role: 'ŚP', x: 35, y: 54 },
+    { role: 'ŚP', x: 50, y: 58 },
+    { role: 'ŚP', x: 65, y: 54 },
+    { role: 'PW', x: 88, y: 50 },
+    { role: 'NA', x: 39, y: 22 },
+    { role: 'NA', x: 61, y: 22 },
+  ],
+  '4-2-3-1': [
+    { role: 'BR', x: 50, y: 92 },
+    { role: 'LO', x: 18, y: 74 },
+    { role: 'ŚO', x: 39, y: 78 },
+    { role: 'ŚO', x: 61, y: 78 },
+    { role: 'PO', x: 82, y: 74 },
+    { role: 'DP', x: 38, y: 58 },
+    { role: 'DP', x: 62, y: 58 },
+    { role: 'LS', x: 20, y: 36 },
+    { role: 'OP', x: 50, y: 38 },
+    { role: 'PS', x: 80, y: 36 },
+    { role: 'NA', x: 50, y: 16 },
+  ],
+};
+
+export const FORMATION_NAMES = Object.keys(FORMATIONS);
+
+/* ---------- Liga: tabela i wyniki (dla drużyny seniorskiej t1) ---------- */
+
+export const STANDINGS: StandingRow[] = [
+  { teamId: 'r1', name: 'Legia II', played: 12, won: 9, drawn: 2, lost: 1, goalsFor: 28, goalsAgainst: 9, points: 29 },
+  { teamId: 'me', name: 'Orły Warszawa', played: 12, won: 8, drawn: 2, lost: 2, goalsFor: 25, goalsAgainst: 12, points: 26 },
+  { teamId: 'r2', name: 'Polonia', played: 12, won: 7, drawn: 3, lost: 2, goalsFor: 22, goalsAgainst: 14, points: 24 },
+  { teamId: 'r3', name: 'Znicz', played: 12, won: 6, drawn: 2, lost: 4, goalsFor: 19, goalsAgainst: 16, points: 20 },
+  { teamId: 'r4', name: 'Radomiak II', played: 12, won: 5, drawn: 3, lost: 4, goalsFor: 17, goalsAgainst: 15, points: 18 },
+  { teamId: 'r5', name: 'Ursus', played: 12, won: 4, drawn: 4, lost: 4, goalsFor: 15, goalsAgainst: 16, points: 16 },
+  { teamId: 'r6', name: 'Świt', played: 12, won: 3, drawn: 3, lost: 6, goalsFor: 12, goalsAgainst: 19, points: 12 },
+  { teamId: 'r7', name: 'Dolcan', played: 12, won: 2, drawn: 2, lost: 8, goalsFor: 10, goalsAgainst: 24, points: 8 },
+  { teamId: 'r8', name: 'Mazur', played: 12, won: 1, drawn: 2, lost: 9, goalsFor: 8, goalsAgainst: 31, points: 5 },
+];
+
+export const RESULTS: MatchResult[] = [
+  { id: 'm1', teamId: 't1', opponent: 'Polonia', date: payDate(-28), home: true, goalsFor: 3, goalsAgainst: 1, competition: 'Liga' },
+  { id: 'm2', teamId: 't1', opponent: 'Znicz', date: payDate(-21), home: false, goalsFor: 2, goalsAgainst: 2, competition: 'Liga' },
+  { id: 'm3', teamId: 't1', opponent: 'Ursus', date: payDate(-14), home: true, goalsFor: 1, goalsAgainst: 0, competition: 'Liga' },
+  { id: 'm4', teamId: 't1', opponent: 'Legia II', date: payDate(-7), home: false, goalsFor: 0, goalsAgainst: 2, competition: 'Liga' },
+  { id: 'm5', teamId: 't1', opponent: 'Świt', date: payDate(-3), home: true, goalsFor: 4, goalsAgainst: 1, competition: 'Puchar' },
+];
+
+/* ---------- Skauting: obserwowani zawodnicy ---------- */
+
+export const SCOUT_TARGETS: ScoutTarget[] = [
+  { id: 's1', firstName: 'Mateusz', lastName: 'Górski', position: 'Napastnik', sport: 'football', age: 19, overall: 78, potential: 88, value: 950000, club: 'Stal Rzeszów', ratings: { fitness: 82, technique: 80, tactics: 70, mentality: 79 }, watched: true },
+  { id: 's2', firstName: 'Dawid', lastName: 'Sikora', position: 'Pomocnik', sport: 'football', age: 21, overall: 75, potential: 82, value: 620000, club: 'Motor Lublin', ratings: { fitness: 78, technique: 79, tactics: 74, mentality: 70 }, watched: false },
+  { id: 's3', firstName: 'Oskar', lastName: 'Baran', position: 'Obrońca', sport: 'football', age: 18, overall: 71, potential: 86, value: 480000, club: 'Widzew II', ratings: { fitness: 80, technique: 66, tactics: 72, mentality: 68 }, watched: false },
+  { id: 's4', firstName: 'Nikodem', lastName: 'Pawlak', position: 'Bramkarz', sport: 'football', age: 22, overall: 76, potential: 80, value: 400000, club: 'GKS Katowice', ratings: { fitness: 74, technique: 70, tactics: 78, mentality: 82 }, watched: false },
+  { id: 's5', firstName: 'Szymon', lastName: 'Adamczyk', position: 'Rozgrywający', sport: 'basketball', age: 20, overall: 79, potential: 85, value: 300000, club: 'Anwil Junior', ratings: { fitness: 81, technique: 83, tactics: 76, mentality: 77 }, watched: false },
+];
+
+/* ---------- Cele treningowe (startowe) ---------- */
+
+export const TRAINING_GOALS: TrainingGoal[] = [
+  { id: 'g1', playerId: 'p4', text: 'Poprawa gry lewą nogą', done: false },
+  { id: 'g2', playerId: 'p4', text: 'Utrzymanie formy strzeleckiej', done: true },
+  { id: 'g3', playerId: 'p3', text: 'Rozwój przywództwa na boisku', done: false },
+  { id: 'g6', playerId: 'p6', text: 'Budowa siły i kondycji', done: false },
+];
