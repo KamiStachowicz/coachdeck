@@ -223,15 +223,43 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Moje drużyny / grupy */}
-      <View>
-        <SectionTitle
-          title={`Moje ${profile.labels.teams}`}
-          action="Zobacz wszystkie"
-          onAction={() => router.push('/teams')}
-        />
-        <View style={{ gap: spacing.md }}>
-          {teams.map((t) => {
+      {/* Moi klienci (trener personalny) */}
+      {isPersonal ? (
+        <View>
+          <SectionTitle title="Moi klienci" action="Zobacz wszystkich" onAction={() => router.push('/players')} />
+          <View style={{ gap: spacing.md }}>
+            {players.slice(0, 5).map((p) => {
+              const remaining = packagesByClient(p.id).reduce((s, pk) => s + (pk.total - pk.used), 0);
+              return (
+                <Card key={p.id} onPress={() => router.push(`/player/${p.id}`)}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                    <Avatar first={p.firstName} last={p.lastName} size={44} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: c.text, fontWeight: '700', fontSize: font.body }}>
+                        {p.firstName} {p.lastName}
+                      </Text>
+                      <Text style={{ color: c.textMuted, fontSize: font.small }}>{p.position ?? 'Klient'}</Text>
+                    </View>
+                    {remaining > 0 ? (
+                      <Badge label={`${remaining} wejść`} color={c.primary} bg={c.primarySoft} />
+                    ) : (
+                      <Badge label="Brak karnetu" color={c.textMuted} />
+                    )}
+                  </View>
+                </Card>
+              );
+            })}
+          </View>
+        </View>
+      ) : (
+        <View>
+          <SectionTitle
+            title={`Moje ${profile.labels.teams}`}
+            action="Zobacz wszystkie"
+            onAction={() => router.push('/teams')}
+          />
+          <View style={{ gap: spacing.md }}>
+            {teams.map((t) => {
             const sport = getSport(t.sport);
             const count = players.filter((p) => p.teamId === t.id).length;
             return (
@@ -254,9 +282,10 @@ export default function Dashboard() {
                 </View>
               </Card>
             );
-          })}
+            })}
+          </View>
         </View>
-      </View>
+      )}
     </ScrollView>
   );
 }
