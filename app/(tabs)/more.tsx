@@ -22,6 +22,7 @@ const MENU: {
   { icon: 'search-outline', label: 'Skauting i transfery', hint: 'Obserwuj i podpisuj zawodników', route: '/scouting' },
   { icon: 'medal-outline', label: 'Nagrody i odznaki', hint: 'Zawodnik miesiąca, rankingi', route: '/awards' },
   { icon: 'bar-chart-outline', label: 'Panel przychodów', hint: 'Subskrypcje i prowizje', route: '/revenue' },
+  { icon: 'notifications-outline', label: 'Powiadomienia', hint: 'Przypomnienia i alerty', route: '/notifications' },
   { icon: 'megaphone-outline', label: 'Komunikacja', hint: 'Ogłoszenia do drużyny/rodziców', route: '/messages' },
   { icon: 'document-text-outline', label: 'Raporty', hint: 'Frekwencja i finanse (PDF)', route: '/reports' },
   { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Konspekty i biblioteka ćwiczeń', route: '/training' },

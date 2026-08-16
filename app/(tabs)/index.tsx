@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
 import { getSport } from '@/src/data';
+import { useNotifications } from '@/src/notifications';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import {
   Card,
@@ -31,6 +32,7 @@ export default function Dashboard() {
 
   const isPersonal = profile.id === 'personal';
   const isIndividual = profile.id === 'individual';
+  const notifications = useNotifications();
 
   const now = new Date();
   const upcoming = [...events]
@@ -76,12 +78,35 @@ export default function Dashboard() {
       contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
     >
       {/* Powitanie */}
-      <View>
-        <Text style={{ color: c.textMuted, fontSize: font.small }}>Witaj z powrotem,</Text>
-        <Text style={{ color: c.text, fontSize: font.h1, fontWeight: '800' }}>Trenerze 👋</Text>
-        <Text style={{ color: c.primary, fontSize: font.small, fontWeight: '700', marginTop: 2 }}>
-          {profile.name}
-        </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.textMuted, fontSize: font.small }}>Witaj z powrotem,</Text>
+          <Text style={{ color: c.text, fontSize: font.h1, fontWeight: '800' }}>Trenerze 👋</Text>
+          <Text style={{ color: c.primary, fontSize: font.small, fontWeight: '700', marginTop: 2 }}>
+            {profile.name}
+          </Text>
+        </View>
+        <Pressable onPress={() => router.push('/notifications')} hitSlop={8} style={{ padding: spacing.sm }}>
+          <Ionicons name="notifications-outline" size={26} color={c.text} />
+          {notifications.length > 0 ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: 2,
+                right: 2,
+                minWidth: 18,
+                height: 18,
+                borderRadius: 9,
+                paddingHorizontal: 4,
+                backgroundColor: c.danger,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{notifications.length}</Text>
+            </View>
+          ) : null}
+        </Pressable>
       </View>
 
       {/* Szybkie akcje */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -168,6 +168,26 @@ export default function PlayerDetail() {
           icon="card-outline"
           onPress={() => router.push(`/card/${player.id}`)}
         />
+
+        {/* Konto rodzica / zawodnika */}
+        <View style={{ flexDirection: 'row', gap: spacing.md }}>
+          <PrimaryButton
+            label="Podgląd rodzica"
+            icon="eye-outline"
+            onPress={() => router.push(`/parent/${player.id}`)}
+            style={{ flex: 1, backgroundColor: c.info }}
+          />
+          <PrimaryButton
+            label="Zaproś"
+            icon="share-social-outline"
+            onPress={() =>
+              Share.share({
+                message: `Zaproszenie do CoachDeck – śledź postępy: ${player.firstName} ${player.lastName}. Podgląd rodzica/zawodnika w aplikacji.`,
+              }).catch(() => {})
+            }
+            style={{ flex: 1, backgroundColor: c.accent }}
+          />
+        </View>
 
         {/* Ocena ogólna + potencjał */}
         <Card>
