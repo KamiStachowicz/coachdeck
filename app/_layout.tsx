@@ -82,6 +82,8 @@ function RootLayoutNav() {
           <Stack.Screen name="awards" options={{ title: 'Nagrody i odznaki' }} />
           <Stack.Screen name="training" options={{ title: 'Plany treningowe' }} />
           <Stack.Screen name="training/[id]" options={{ title: 'Konspekt treningu' }} />
+          <Stack.Screen name="registrations" options={{ title: 'Nabór i zapisy' }} />
+          <Stack.Screen name="camps" options={{ title: 'Obozy i eventy' }} />
         </Stack>
         <OnboardingGate />
       </ThemeProvider>

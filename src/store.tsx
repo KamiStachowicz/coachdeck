@@ -15,6 +15,8 @@ import type {
   PersonalRecord,
   SessionPackage,
   BodyMeasurement,
+  Registration,
+  Camp,
 } from './types';
 import {
   TEAMS,
@@ -29,12 +31,14 @@ import {
   PERSONAL_RECORDS,
   SESSION_PACKAGES,
   MEASUREMENTS,
+  REGISTRATIONS,
+  CAMPS,
   enrichPlayer,
 } from './data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isBackendConfigured } from './config';
 import { supabase, fetchInitialData, fetchPayments, paymentToRow } from './supabase';
-import { getPlan, TRIAL_DAYS, type PlanId, type FeatureKey } from './plans';
+import { getPlan, TRIAL_DAYS, findCoupon, type PlanId, type FeatureKey, type BillingCycle, type Coupon } from './plans';
 import { getProfile, type CoachProfile, type ProfileConfig } from './profiles';
 
 const ONBOARDED_KEY = 'coachdeck.onboarded';
@@ -86,6 +90,17 @@ interface StoreValue {
   currentPlan: PlanId | null; // aktywna subskrypcja (null = brak, np. w okresie próbnym)
   trialActive: boolean;
   trialDaysLeft: number;
+  billingCycle: BillingCycle;
+  setBillingCycle: (cycle: BillingCycle) => void;
+  coupon: Coupon | null;
+  applyCoupon: (code: string) => boolean;
+  clearCoupon: () => void;
+  registrations: Registration[];
+  addRegistration: (r: Omit<Registration, 'id' | 'paid' | 'status' | 'date'>) => void;
+  acceptRegistration: (id: string) => void;
+  toggleRegPaid: (id: string) => void;
+  camps: Camp[];
+  campSignup: (id: string) => void;
   onboarded: boolean | null; // null = jeszcze wczytywane
   completeOnboarding: () => void;
   coachProfile: CoachProfile | null; // null = jeszcze niewybrany
@@ -134,6 +149,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [records, setRecords] = useState<PersonalRecord[]>(PERSONAL_RECORDS);
   const [packages, setPackages] = useState<SessionPackage[]>(SESSION_PACKAGES);
   const [measurements, setMeasurements] = useState<BodyMeasurement[]>(MEASUREMENTS);
+  const [billingCycle, setBillingCycleState] = useState<BillingCycle>('monthly');
+  const [coupon, setCoupon] = useState<Coupon | null>(null);
+  const [registrations, setRegistrations] = useState<Registration[]>(REGISTRATIONS);
+  const [camps, setCamps] = useState<Camp[]>(CAMPS);
   const [subscribedPlan, setSubscribedPlan] = useState<PlanId | null>(null);
   const [trialEndsAt] = useState<string>(() => {
     const d = new Date();
@@ -344,6 +363,48 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           { id: nextId('bm'), clientId, weightKg, date: new Date().toISOString() },
         ]),
+      billingCycle,
+      setBillingCycle: (cycle) => setBillingCycleState(cycle),
+      coupon,
+      applyCoupon: (code) => {
+        const found = findCoupon(code);
+        if (found) {
+          setCoupon(found);
+          return true;
+        }
+        return false;
+      },
+      clearCoupon: () => setCoupon(null),
+      registrations,
+      addRegistration: (r) =>
+        setRegistrations((prev) => [
+          { ...r, id: nextId('rg'), paid: false, status: 'new', date: new Date().toISOString() },
+          ...prev,
+        ]),
+      acceptRegistration: (id) => {
+        const reg = registrations.find((x) => x.id === id);
+        if (!reg) return;
+        const pid = nextId('p');
+        setPlayers((prev) => [
+          ...prev,
+          enrichPlayer({
+            id: pid,
+            teamId: reg.teamId,
+            firstName: reg.firstName,
+            lastName: reg.lastName,
+            ratings: { fitness: 55, technique: 55, tactics: 55, mentality: 55 },
+            status: 'available',
+          }),
+        ]);
+        setRegistrations((prev) => prev.map((x) => (x.id === id ? { ...x, status: 'accepted' } : x)));
+      },
+      toggleRegPaid: (id) =>
+        setRegistrations((prev) => prev.map((x) => (x.id === id ? { ...x, paid: !x.paid } : x))),
+      camps,
+      campSignup: (id) =>
+        setCamps((prev) =>
+          prev.map((cmp) => (cmp.id === id && cmp.signups < cmp.capacity ? { ...cmp, signups: cmp.signups + 1 } : cmp)),
+        ),
       currentPlan: subscribedPlan,
       trialActive,
       trialDaysLeft,
@@ -420,7 +481,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, subscribedPlan, trialEndsAt, onboarded, coachProfile, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
