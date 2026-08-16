@@ -32,9 +32,23 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: t('tab.home'), tabBarIcon: tabIcon('grid-outline') }} />
-      <Tabs.Screen name="teams" options={{ title: profile.labels.teamsTab, tabBarIcon: tabIcon('shield-outline') }} />
+      {/* Trener personalny (praca 1:1) nie ma zakładki drużyn */}
+      <Tabs.Screen
+        name="teams"
+        options={{
+          title: profile.labels.teamsTab,
+          tabBarIcon: tabIcon('shield-outline'),
+          href: profile.id === 'personal' ? null : undefined,
+        }}
+      />
       <Tabs.Screen name="calendar" options={{ title: t('tab.calendar'), tabBarIcon: tabIcon('calendar-outline') }} />
-      <Tabs.Screen name="players" options={{ title: profile.labels.playersTab, tabBarIcon: tabIcon('people-outline') }} />
+      <Tabs.Screen
+        name="players"
+        options={{
+          title: profile.labels.playersTab,
+          tabBarIcon: tabIcon(profile.id === 'personal' ? 'person-outline' : 'people-outline'),
+        }}
+      />
       <Tabs.Screen name="more" options={{ title: t('tab.more'), tabBarIcon: tabIcon('ellipsis-horizontal') }} />
     </Tabs>
   );
