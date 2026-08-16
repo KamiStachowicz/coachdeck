@@ -97,6 +97,8 @@ function ThemedApp() {
         <Stack.Screen name="messages" options={{ title: 'Komunikacja' }} />
         <Stack.Screen name="settings" options={{ title: 'Ustawienia' }} />
         <Stack.Screen name="reports" options={{ title: 'Raporty' }} />
+        <Stack.Screen name="notifications" options={{ title: 'Powiadomienia' }} />
+        <Stack.Screen name="parent/[playerId]" options={{ title: 'Podgląd rodzica' }} />
       </Stack>
       <OnboardingGate />
     </ThemeProvider>
