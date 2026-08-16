@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
-import { getSport, PAYMENT_KINDS, isTeamSport } from '@/src/data';
+import { getSport, PAYMENT_KINDS, isTeamSport, parseRecordValue, lowerIsBetter } from '@/src/data';
 import { badgesFor } from '@/src/gamification';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import {
@@ -45,11 +45,15 @@ export default function PlayerDetail() {
   const c = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal, attendanceStats, recordsByPlayer, addRecord } =
+  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal, attendanceStats, recordsByPlayer, addRecord, profile, packagesByClient, addPackage, useSession, measurementsByClient, addMeasurement } =
     useStore();
   const [goalText, setGoalText] = useState('');
   const [recEvent, setRecEvent] = useState('');
   const [recResult, setRecResult] = useState('');
+  const [pkName, setPkName] = useState('');
+  const [pkTotal, setPkTotal] = useState('');
+  const [pkPrice, setPkPrice] = useState('');
+  const [weight, setWeight] = useState('');
 
   const player = getPlayer(id);
   if (!player) {
@@ -69,6 +73,35 @@ export default function PlayerDetail() {
   const badges = badgesFor(player, att.total > 0 ? att.pct : undefined);
   const teamSport = sport ? isTeamSport(sport.id) : true;
   const records = recordsByPlayer(player.id);
+  const packages = packagesByClient(player.id);
+  const measurements = measurementsByClient(player.id);
+  const showPackages = profile.id === 'personal';
+  const showMeasurements = profile.id === 'personal' || profile.id === 'individual';
+
+  // Grupowanie rekordów po konkurencji + wyznaczenie PB.
+  const recordGroups = Object.values(
+    records.reduce((acc, r) => {
+      (acc[r.event] ??= { event: r.event, items: [] }).items.push(r);
+      return acc;
+    }, {} as Record<string, { event: string; items: typeof records }>),
+  ).map((g) => {
+    const lower = lowerIsBetter(g.items[0].result);
+    let bestId = g.items[0].id;
+    let bestVal = parseRecordValue(g.items[0].result);
+    for (const it of g.items) {
+      const v = parseRecordValue(it.result);
+      if (v == null || bestVal == null) continue;
+      if ((lower && v < bestVal) || (!lower && v > bestVal)) {
+        bestVal = v;
+        bestId = it.id;
+      }
+    }
+    return {
+      event: g.event,
+      bestId,
+      items: [...g.items].sort((a, b) => b.date.localeCompare(a.date)),
+    };
+  });
   const payments = [...paymentsByPlayer(player.id)].sort((a, b) => b.dueDate.localeCompare(a.dueDate));
   const outstanding = payments
     .filter((p) => p.status !== 'paid')
@@ -219,21 +252,173 @@ export default function PlayerDetail() {
           </View>
         )}
 
+        {/* Karnety / pakiety wejść (trener personalny) */}
+        {showPackages ? (
+          <View>
+            <SectionTitle title="Karnety" />
+            <View style={{ gap: spacing.md }}>
+              {packages.map((pk) => {
+                const left = pk.total - pk.used;
+                const pct = Math.round((pk.used / pk.total) * 100);
+                return (
+                  <Card key={pk.id}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={{ color: c.text, fontWeight: '700' }}>{pk.name}</Text>
+                      <Text style={{ color: left > 0 ? c.primary : c.danger, fontWeight: '900' }}>
+                        {left}/{pk.total}
+                      </Text>
+                    </View>
+                    <Text style={{ color: c.textMuted, fontSize: font.tiny, marginTop: 2 }}>
+                      Pozostało {left} {left === 1 ? 'wejście' : 'wejść'} · {formatMoney(pk.price)}
+                    </Text>
+                    <View style={{ marginTop: spacing.sm }}>
+                      <ProgressBar value={pct} color={left > 0 ? c.primary : c.danger} />
+                    </View>
+                    <Pressable
+                      onPress={() => useSession(pk.id)}
+                      disabled={left <= 0}
+                      style={{
+                        marginTop: spacing.md,
+                        alignItems: 'center',
+                        paddingVertical: spacing.sm,
+                        borderRadius: radius.md,
+                        backgroundColor: left > 0 ? c.primarySoft : c.cardAlt,
+                      }}
+                    >
+                      <Text style={{ color: left > 0 ? c.primary : c.textMuted, fontWeight: '800' }}>
+                        {left > 0 ? 'Odbij wejście' : 'Karnet wykorzystany'}
+                      </Text>
+                    </Pressable>
+                  </Card>
+                );
+              })}
+              {/* dodawanie karnetu */}
+              <Card style={{ gap: spacing.sm }}>
+                <TextInput
+                  value={pkName}
+                  onChangeText={setPkName}
+                  placeholder="Nazwa karnetu (np. Karnet 10 wejść)"
+                  placeholderTextColor={c.tabInactive}
+                  style={{ backgroundColor: c.cardAlt, borderRadius: radius.md, padding: spacing.md, color: c.text }}
+                />
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <TextInput
+                    value={pkTotal}
+                    onChangeText={setPkTotal}
+                    placeholder="Wejść"
+                    keyboardType="number-pad"
+                    placeholderTextColor={c.tabInactive}
+                    style={{ flex: 1, backgroundColor: c.cardAlt, borderRadius: radius.md, padding: spacing.md, color: c.text }}
+                  />
+                  <TextInput
+                    value={pkPrice}
+                    onChangeText={setPkPrice}
+                    placeholder="Cena (zł)"
+                    keyboardType="numeric"
+                    placeholderTextColor={c.tabInactive}
+                    style={{ flex: 1, backgroundColor: c.cardAlt, borderRadius: radius.md, padding: spacing.md, color: c.text }}
+                  />
+                  <Pressable
+                    onPress={() => {
+                      const t = Number(pkTotal);
+                      if (pkName.trim() && t > 0) {
+                        addPackage(player.id, pkName.trim(), t, Number(pkPrice) || 0);
+                        setPkName('');
+                        setPkTotal('');
+                        setPkPrice('');
+                      }
+                    }}
+                    style={{ paddingHorizontal: spacing.md, justifyContent: 'center', borderRadius: radius.md, backgroundColor: c.primary }}
+                  >
+                    <Ionicons name="add" size={20} color={c.onPrimary} />
+                  </Pressable>
+                </View>
+              </Card>
+            </View>
+          </View>
+        ) : null}
+
+        {/* Pomiary (waga) */}
+        {showMeasurements ? (
+          <View>
+            <SectionTitle title="Pomiary wagi" />
+            <Card style={{ gap: spacing.md }}>
+              {measurements.length >= 2 ? (
+                <MiniBars
+                  points={measurements.map((m) => ({
+                    label: `${new Date(m.date).getDate()}.${new Date(m.date).getMonth() + 1}`,
+                    overall: Math.round(m.weightKg),
+                  }))}
+                  color={c.info}
+                />
+              ) : null}
+              {measurements.length > 0 ? (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ color: c.textMuted, fontSize: font.small }}>Ostatni pomiar</Text>
+                  <Text style={{ color: c.text, fontWeight: '900' }}>
+                    {measurements[measurements.length - 1].weightKg.toFixed(1)} kg
+                  </Text>
+                </View>
+              ) : (
+                <Text style={{ color: c.textMuted, fontSize: font.small }}>Brak pomiarów. Dodaj pierwszy.</Text>
+              )}
+              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                <TextInput
+                  value={weight}
+                  onChangeText={setWeight}
+                  placeholder="Waga (kg)"
+                  keyboardType="numeric"
+                  placeholderTextColor={c.tabInactive}
+                  style={{ flex: 1, backgroundColor: c.cardAlt, borderRadius: radius.md, padding: spacing.md, color: c.text }}
+                />
+                <Pressable
+                  onPress={() => {
+                    const w = parseFloat(weight.replace(',', '.'));
+                    if (w > 0) {
+                      addMeasurement(player.id, w);
+                      setWeight('');
+                    }
+                  }}
+                  style={{ paddingHorizontal: spacing.lg, justifyContent: 'center', borderRadius: radius.md, backgroundColor: c.primary }}
+                >
+                  <Ionicons name="add" size={20} color={c.onPrimary} />
+                </Pressable>
+              </View>
+            </Card>
+          </View>
+        ) : null}
+
         {/* Rekordy życiowe / wyniki */}
         <View>
           <SectionTitle title="Rekordy życiowe" />
-          <Card style={{ gap: spacing.md }}>
-            {records.length === 0 ? (
+          <Card style={{ gap: spacing.lg }}>
+            {recordGroups.length === 0 ? (
               <Text style={{ color: c.textMuted, fontSize: font.small }}>Brak rekordów. Dodaj pierwszy poniżej.</Text>
             ) : (
-              records.map((r) => (
-                <View key={r.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-                  <Ionicons name="stopwatch-outline" size={18} color={c.info} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: c.text, fontWeight: '700', fontSize: font.small }}>{r.event}</Text>
-                    <Text style={{ color: c.textMuted, fontSize: font.tiny }}>{formatDate(r.date)}</Text>
-                  </View>
-                  <Text style={{ color: c.text, fontWeight: '900' }}>{r.result}</Text>
+              recordGroups.map((g) => (
+                <View key={g.event} style={{ gap: 6 }}>
+                  <Text style={{ color: c.text, fontWeight: '800', fontSize: font.small }}>{g.event}</Text>
+                  {g.items.map((r) => {
+                    const isPb = r.id === g.bestId;
+                    return (
+                      <View key={r.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                        <Ionicons
+                          name={isPb ? 'trophy' : 'stopwatch-outline'}
+                          size={16}
+                          color={isPb ? c.accent : c.tabInactive}
+                        />
+                        <Text style={{ color: c.textMuted, fontSize: font.tiny, flex: 1 }}>{formatDate(r.date)}</Text>
+                        {isPb ? (
+                          <View style={{ backgroundColor: c.accent + '22', paddingHorizontal: 6, borderRadius: radius.pill }}>
+                            <Text style={{ color: c.accent, fontSize: 10, fontWeight: '800' }}>PB</Text>
+                          </View>
+                        ) : null}
+                        <Text style={{ color: isPb ? c.text : c.textMuted, fontWeight: isPb ? '900' : '600', fontSize: font.small, width: 78, textAlign: 'right' }}>
+                          {r.result}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
               ))
             )}

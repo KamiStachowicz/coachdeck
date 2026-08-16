@@ -13,6 +13,8 @@ import type {
   ScoutTarget,
   TrainingGoal,
   PersonalRecord,
+  SessionPackage,
+  BodyMeasurement,
 } from './types';
 
 /** Sporty zespołowe (mają skład/formację, gole itd.) vs indywidualne. */
@@ -298,7 +300,10 @@ export const RESULTS: MatchResult[] = [
 /* ---------- Rekordy życiowe (dyscypliny indywidualne) ---------- */
 
 export const PERSONAL_RECORDS: PersonalRecord[] = [
-  { id: 'r1', playerId: 'p10', event: '100 m kraul', result: '0:58.30', date: payDate(-20) },
+  // Zofia – progres na 100 m kraul (czasy spadają = poprawa)
+  { id: 'r1', playerId: 'p10', event: '100 m kraul', result: '1:01.20', date: payDate(-60) },
+  { id: 'r1b', playerId: 'p10', event: '100 m kraul', result: '0:59.70', date: payDate(-35) },
+  { id: 'r1c', playerId: 'p10', event: '100 m kraul', result: '0:58.30', date: payDate(-8) },
   { id: 'r2', playerId: 'p10', event: '200 m kraul', result: '2:09.80', date: payDate(-6) },
   { id: 'r3', playerId: 'p11', event: '100 m klasyczny', result: '1:07.40', date: payDate(-13) },
   { id: 'r4', playerId: 'p12', event: '100 m motylkowy', result: '1:03.10', date: payDate(-9) },
@@ -306,6 +311,37 @@ export const PERSONAL_RECORDS: PersonalRecord[] = [
   { id: 'r6', playerId: 'p13', event: '200 m', result: '22.90 s', date: payDate(-2) },
   { id: 'r7', playerId: 'p14', event: 'Skok w dal', result: '5.85 m', date: payDate(-11) },
 ];
+
+/* ---------- Trener personalny: karnety i pomiary (demo) ---------- */
+
+export const SESSION_PACKAGES: SessionPackage[] = [
+  { id: 'pk1', clientId: 'p4', name: 'Karnet 10 wejść', total: 10, used: 6, price: 600, date: payDate(-25) },
+  { id: 'pk2', clientId: 'p10', name: 'Karnet 8 wejść', total: 8, used: 2, price: 520, date: payDate(-12) },
+  { id: 'pk3', clientId: 'p3', name: 'Pakiet miesięczny', total: 12, used: 11, price: 700, date: payDate(-20) },
+];
+
+export const MEASUREMENTS: BodyMeasurement[] = [
+  { id: 'bm1', clientId: 'p4', weightKg: 82.0, date: payDate(-60) },
+  { id: 'bm2', clientId: 'p4', weightKg: 80.5, date: payDate(-35) },
+  { id: 'bm3', clientId: 'p4', weightKg: 79.2, date: payDate(-10) },
+  { id: 'bm4', clientId: 'p10', weightKg: 61.0, date: payDate(-40) },
+  { id: 'bm5', clientId: 'p10', weightKg: 60.2, date: payDate(-12) },
+];
+
+/** Parsuje wynik do liczby (mm:ss → sekundy; „6.20 m" → 6.20). */
+export function parseRecordValue(result: string): number | null {
+  const t = result.match(/(\d+):(\d+(?:\.\d+)?)/);
+  if (t) return parseInt(t[1], 10) * 60 + parseFloat(t[2]);
+  const n = result.match(/(\d+(?:[.,]\d+)?)/);
+  return n ? parseFloat(n[1].replace(',', '.')) : null;
+}
+
+/** Czy niższy wynik jest lepszy (czasy) vs wyższy (odległości). */
+export function lowerIsBetter(result: string): boolean {
+  if (result.includes(':')) return true; // czas mm:ss
+  if (/\bs\b|sek|s$/i.test(result)) return true; // sekundy
+  return false; // metry, punkty itp. – wyżej lepiej
+}
 
 /* ---------- Skauting: obserwowani zawodnicy ---------- */
 
