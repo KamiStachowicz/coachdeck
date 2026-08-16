@@ -294,3 +294,10 @@ export interface Review {
   text: string;
   date: string;
 }
+
+export interface Booking {
+  id: string;
+  coachId: string;
+  slot: string; // etykieta terminu, np. "pon. 17:00"
+  date: string; // ISO utworzenia
+}
