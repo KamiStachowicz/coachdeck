@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,10 +17,20 @@ import {
   formatMoney,
 } from '@/components/ui';
 
+interface QuickAction {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  route: string;
+  color: string;
+}
+
 export default function Dashboard() {
   const c = useTheme();
   const router = useRouter();
-  const { teams, players, events, getTeam, financeSummary, profile } = useStore();
+  const { teams, players, events, getTeam, financeSummary, profile, packagesByClient } = useStore();
+
+  const isPersonal = profile.id === 'personal';
+  const isIndividual = profile.id === 'individual';
 
   const now = new Date();
   const upcoming = [...events]
@@ -29,6 +39,36 @@ export default function Dashboard() {
     .slice(0, 3);
 
   const injured = players.filter((p) => p.status === 'injured').length;
+  const activePackages = players
+    .flatMap((p) => packagesByClient(p.id))
+    .filter((pk) => pk.total - pk.used > 0).length;
+
+  // Szybkie akcje zależne od profilu
+  const quick: QuickAction[] = isPersonal
+    ? [
+        { icon: 'people-outline', label: 'Klienci', route: '/players', color: c.primary },
+        { icon: 'calendar-outline', label: 'Kalendarz', route: '/calendar', color: c.info },
+        { icon: 'person-add-outline', label: 'Nowy klient', route: '/registrations', color: c.accent },
+        { icon: 'clipboard-outline', label: 'Plany', route: '/training', color: '#7C3AED' },
+      ]
+    : isIndividual
+      ? [
+          { icon: 'people-outline', label: 'Zawodnicy', route: '/players', color: c.primary },
+          { icon: 'calendar-outline', label: 'Kalendarz', route: '/calendar', color: c.info },
+          { icon: 'person-add-outline', label: 'Nabór', route: '/registrations', color: c.accent },
+          { icon: 'bonfire-outline', label: 'Obozy', route: '/camps', color: '#7C3AED' },
+        ]
+      : [
+          {
+            icon: 'grid-outline',
+            label: 'Taktyka',
+            route: teams[0] ? `/tactics/${teams[0].id}` : '/teams',
+            color: c.primary,
+          },
+          { icon: 'trophy-outline', label: 'Liga', route: '/league', color: c.accent },
+          { icon: 'clipboard-outline', label: 'Plany', route: '/training', color: c.info },
+          { icon: 'person-add-outline', label: 'Nabór', route: '/registrations', color: '#7C3AED' },
+        ];
 
   return (
     <ScrollView
@@ -39,16 +79,64 @@ export default function Dashboard() {
       <View>
         <Text style={{ color: c.textMuted, fontSize: font.small }}>Witaj z powrotem,</Text>
         <Text style={{ color: c.text, fontSize: font.h1, fontWeight: '800' }}>Trenerze 👋</Text>
+        <Text style={{ color: c.primary, fontSize: font.small, fontWeight: '700', marginTop: 2 }}>
+          {profile.name}
+        </Text>
       </View>
 
-      {/* Statystyki */}
+      {/* Szybkie akcje */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
+        {quick.map((q) => (
+          <Pressable
+            key={q.label}
+            onPress={() => router.push(q.route as any)}
+            style={{
+              width: '47%',
+              flexGrow: 1,
+              backgroundColor: c.card,
+              borderRadius: radius.lg,
+              borderWidth: StyleSheet_hairline(),
+              borderColor: c.border,
+              padding: spacing.md,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.sm,
+            }}
+          >
+            <View
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: radius.md,
+                backgroundColor: q.color + '22',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name={q.icon} size={20} color={q.color} />
+            </View>
+            <Text style={{ color: c.text, fontWeight: '700', fontSize: font.small }}>{q.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* Statystyki (dopasowane do profilu) */}
       <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <StatTile label={profile.labels.teamsTab} value={teams.length} icon="shield-outline" />
-        <StatTile label={profile.labels.playersTab} value={players.length} icon="people-outline" tint={c.info} />
+        <StatTile label={profile.labels.playersTab} value={players.length} icon="people-outline" />
+        <StatTile label={profile.labels.teamsTab} value={teams.length} icon="shield-outline" tint={c.info} />
       </View>
       <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <StatTile label="Wydarzenia" value={events.length} icon="calendar-outline" tint={c.accent} />
-        <StatTile label="Kontuzje" value={injured} icon="medkit-outline" tint={c.danger} />
+        <StatTile
+          label={isPersonal ? 'Sesje' : 'Wydarzenia'}
+          value={events.length}
+          icon="calendar-outline"
+          tint={c.accent}
+        />
+        {isPersonal ? (
+          <StatTile label="Aktywne karnety" value={activePackages} icon="ticket-outline" tint={c.primary} />
+        ) : (
+          <StatTile label="Kontuzje" value={injured} icon="medkit-outline" tint={c.danger} />
+        )}
       </View>
 
       {/* Finanse */}
@@ -82,16 +170,20 @@ export default function Dashboard() {
         </View>
       </Card>
 
-      {/* Najbliższe wydarzenia */}
+      {/* Najbliższe */}
       <View>
-        <SectionTitle title="Najbliższe" action="Kalendarz" onAction={() => router.push('/calendar')} />
+        <SectionTitle
+          title={isPersonal ? 'Najbliższe sesje' : 'Najbliższe'}
+          action="Kalendarz"
+          onAction={() => router.push('/calendar')}
+        />
         <View style={{ gap: spacing.md }}>
           {upcoming.map((e) => {
             const team = getTeam(e.teamId);
             const sport = team ? getSport(team.sport) : null;
             const isMatch = e.type === 'match';
             return (
-              <Card key={e.id} onPress={() => router.push('/calendar')}>
+              <Card key={e.id} onPress={() => router.push(`/attendance/${e.id}`)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                   <View
                     style={{
@@ -131,9 +223,13 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Moje drużyny */}
+      {/* Moje drużyny / grupy */}
       <View>
-        <SectionTitle title={`Moje ${profile.labels.teams}`} action="Zobacz wszystkie" onAction={() => router.push('/teams')} />
+        <SectionTitle
+          title={`Moje ${profile.labels.teams}`}
+          action="Zobacz wszystkie"
+          onAction={() => router.push('/teams')}
+        />
         <View style={{ gap: spacing.md }}>
           {teams.map((t) => {
             const sport = getSport(t.sport);
@@ -151,7 +247,9 @@ export default function Dashboard() {
                   </View>
                   <View style={{ alignItems: 'center' }}>
                     <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>{count}</Text>
-                    <Text style={{ color: c.textMuted, fontSize: font.tiny }}>zawodn.</Text>
+                    <Text style={{ color: c.textMuted, fontSize: font.tiny }}>
+                      {profile.labels.players.slice(0, 6)}.
+                    </Text>
                   </View>
                 </View>
               </Card>
@@ -161,4 +259,8 @@ export default function Dashboard() {
       </View>
     </ScrollView>
   );
+}
+
+function StyleSheet_hairline() {
+  return 1;
 }
