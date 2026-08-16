@@ -9,7 +9,7 @@ import { useTheme, spacing, font, radius } from '@/src/theme';
 
 export function ProfilePicker() {
   const c = useTheme();
-  const { setProfile } = useStore();
+  const { setProfile, coachProfile, closeProfilePicker } = useStore();
   const { width, height } = useWindowDimensions();
 
   return (
@@ -20,8 +20,19 @@ export function ProfilePicker() {
           colors={['#059669', '#0891B2']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ paddingTop: 72, paddingBottom: spacing.xl, paddingHorizontal: spacing.lg }}
+          style={{ paddingTop: 56, paddingBottom: spacing.xl, paddingHorizontal: spacing.lg }}
         >
+          {/* Wstecz – tylko gdy profil już wybrany (można anulować) */}
+          {coachProfile !== null ? (
+            <Pressable
+              onPress={closeProfilePicker}
+              hitSlop={12}
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}
+            >
+              <Ionicons name="chevron-back" size={24} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Wstecz</Text>
+            </Pressable>
+          ) : null}
           <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: font.body, fontWeight: '700' }}>
             CoachDeck
           </Text>
@@ -35,7 +46,9 @@ export function ProfilePicker() {
 
         {/* Karty profili */}
         <View style={{ padding: spacing.lg, gap: spacing.md }}>
-          {PROFILES.map((p) => (
+          {PROFILES.map((p) => {
+            const active = coachProfile === p.id;
+            return (
             <Pressable
               key={p.id}
               onPress={() => setProfile(p.id)}
@@ -43,8 +56,8 @@ export function ProfilePicker() {
                 backgroundColor: c.card,
                 borderRadius: radius.lg,
                 padding: spacing.lg,
-                borderWidth: 1,
-                borderColor: c.border,
+                borderWidth: active ? 2 : 1,
+                borderColor: active ? p.color : c.border,
                 opacity: pressed ? 0.85 : 1,
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -67,9 +80,10 @@ export function ProfilePicker() {
                 <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>{p.name}</Text>
                 <Text style={{ color: c.textMuted, fontSize: font.small, marginTop: 2 }}>{p.tagline}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={22} color={p.color} />
+              <Ionicons name={active ? 'checkmark-circle' : 'chevron-forward'} size={22} color={p.color} />
             </Pressable>
-          ))}
+            );
+          })}
         </View>
 
         <Text style={{ color: c.textMuted, fontSize: font.tiny, textAlign: 'center', paddingHorizontal: spacing.lg }}>

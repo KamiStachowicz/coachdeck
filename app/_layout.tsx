@@ -111,8 +111,8 @@ function HeaderBack() {
 }
 
 function OnboardingGate() {
-  const { onboarded, completeOnboarding, coachProfile } = useStore();
+  const { onboarded, completeOnboarding, coachProfile, profilePickerOpen } = useStore();
   if (onboarded === false) return <Onboarding onDone={completeOnboarding} />;
-  if (onboarded === true && coachProfile === null) return <ProfilePicker />;
+  if (onboarded === true && (coachProfile === null || profilePickerOpen)) return <ProfilePicker />;
   return null;
 }
