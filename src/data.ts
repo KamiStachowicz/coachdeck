@@ -15,6 +15,8 @@ import type {
   PersonalRecord,
   SessionPackage,
   BodyMeasurement,
+  Registration,
+  Camp,
 } from './types';
 
 /** Sporty zespołowe (mają skład/formację, gole itd.) vs indywidualne. */
@@ -326,6 +328,20 @@ export const MEASUREMENTS: BodyMeasurement[] = [
   { id: 'bm3', clientId: 'p4', weightKg: 79.2, date: payDate(-10) },
   { id: 'bm4', clientId: 'p10', weightKg: 61.0, date: payDate(-40) },
   { id: 'bm5', clientId: 'p10', weightKg: 60.2, date: payDate(-12) },
+];
+
+/* ---------- Sprzedaż: nabór i obozy (demo) ---------- */
+
+export const REGISTRATIONS: Registration[] = [
+  { id: 'rg1', teamId: 't2', firstName: 'Szymon', lastName: 'Wróbel', contact: '600 100 200', fee: 150, paid: false, status: 'new', date: payDate(-2) },
+  { id: 'rg2', teamId: 't2', firstName: 'Aleks', lastName: 'Nowicki', contact: 'rodzic@mail.pl', fee: 150, paid: true, status: 'new', date: payDate(-1) },
+  { id: 'rg3', teamId: 't4', firstName: 'Nadia', lastName: 'Kot', contact: '511 222 333', fee: 120, paid: false, status: 'new', date: payDate(-4) },
+];
+
+export const CAMPS: Camp[] = [
+  { id: 'cmp1', title: 'Obóz letni – Zakopane', location: 'Zakopane', dateRange: '1–8 lipca', price: 1800, deposit: 400, capacity: 30, signups: 22 },
+  { id: 'cmp2', title: 'Camp pływacki', location: 'Spała', dateRange: '15–20 sierpnia', price: 1400, deposit: 300, capacity: 20, signups: 20 },
+  { id: 'cmp3', title: 'Turniej weekendowy', location: 'Łódź', dateRange: '12–13 października', price: 250, deposit: 100, capacity: 40, signups: 12 },
 ];
 
 /** Parsuje wynik do liczby (mm:ss → sekundy; „6.20 m" → 6.20). */

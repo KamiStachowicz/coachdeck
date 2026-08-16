@@ -16,6 +16,8 @@ const MENU: {
   route?: string;
 }[] = [
   { icon: 'card-outline', label: 'Finanse i składki', hint: 'Opłaty, składki, zajęcia', route: '/finances' },
+  { icon: 'person-add-outline', label: 'Nabór i zapisy', hint: 'Zgłoszenia i wpisowe', route: '/registrations' },
+  { icon: 'bonfire-outline', label: 'Obozy i eventy', hint: 'Rezerwacje i zaliczki', route: '/camps' },
   { icon: 'trophy-outline', label: 'Liga i wyniki', hint: 'Tabela ligowa i mecze', route: '/league' },
   { icon: 'search-outline', label: 'Skauting i transfery', hint: 'Obserwuj i podpisuj zawodników', route: '/scouting' },
   { icon: 'medal-outline', label: 'Nagrody i odznaki', hint: 'Zawodnik miesiąca, rankingi', route: '/awards' },

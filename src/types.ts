@@ -234,3 +234,28 @@ export interface BodyMeasurement {
   date: string; // ISO
   note?: string;
 }
+
+/* ---------- Sprzedaż: nabór, obozy ---------- */
+
+export interface Registration {
+  id: string;
+  teamId: string;
+  firstName: string;
+  lastName: string;
+  contact?: string; // telefon/e-mail opiekuna
+  fee: number; // wpisowe (PLN)
+  paid: boolean;
+  status: 'new' | 'accepted';
+  date: string; // ISO
+}
+
+export interface Camp {
+  id: string;
+  title: string;
+  location: string;
+  dateRange: string; // np. "1–8 lipca"
+  price: number; // PLN
+  deposit: number; // zaliczka PLN
+  capacity: number;
+  signups: number;
+}

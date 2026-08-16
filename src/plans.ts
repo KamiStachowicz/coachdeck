@@ -85,6 +85,39 @@ export function getPlan(id: PlanId): Plan {
   return PLANS.find((p) => p.id === id) ?? PLANS[0];
 }
 
+/* ---------- Rozliczenia: rabat roczny i kupony ---------- */
+
+/** Płacąc rocznie dostajesz 2 miesiące gratis. */
+export const YEARLY_MONTHS_FREE = 2;
+export function yearlyPrice(monthly: number): number {
+  return monthly * (12 - YEARLY_MONTHS_FREE);
+}
+
+export type BillingCycle = 'monthly' | 'yearly';
+
+export interface Coupon {
+  code: string;
+  percent: number;
+  label: string;
+}
+
+export const COUPONS: Coupon[] = [
+  { code: 'START20', percent: 20, label: '-20% na start' },
+  { code: 'KLUB10', percent: 10, label: '-10% dla klubów' },
+  { code: 'TRENER15', percent: 15, label: '-15% dla trenerów' },
+];
+
+export function findCoupon(code: string): Coupon | undefined {
+  return COUPONS.find((c) => c.code.toLowerCase() === code.trim().toLowerCase());
+}
+
+/** Cena po uwzględnieniu cyklu i kuponu. */
+export function priceWith(monthly: number, cycle: BillingCycle, coupon: Coupon | null): number {
+  const base = cycle === 'yearly' ? yearlyPrice(monthly) : monthly;
+  const afterCoupon = coupon ? base * (1 - coupon.percent / 100) : base;
+  return Math.round(afterCoupon);
+}
+
 /** Prowizja serwisowa doliczana do płatności online (składki). */
 export const SERVICE_FEE = {
   percent: 1.5, // %
