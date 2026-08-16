@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -7,13 +7,20 @@ import { useStore } from '@/src/store';
 import { getSport } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { Card, Badge, PrimaryButton, EmptyState, formatDate, formatTime } from '@/components/ui';
+import { MonthCalendar, dayKey } from '@/components/MonthCalendar';
 
 export default function CalendarScreen() {
   const c = useTheme();
   const router = useRouter();
   const { events, getTeam } = useStore();
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
-  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
+  const marks = new Set(events.map((e) => dayKey(new Date(e.date))));
+
+  const visible = selectedDay
+    ? events.filter((e) => dayKey(new Date(e.date)) === dayKey(selectedDay))
+    : events;
+  const sorted = [...visible].sort((a, b) => a.date.localeCompare(b.date));
 
   // grupowanie po dacie (dzień)
   const groups: Record<string, typeof sorted> = {};
@@ -29,8 +36,24 @@ export default function CalendarScreen() {
     >
       <PrimaryButton label="Dodaj wydarzenie" icon="add" onPress={() => router.push('/modal?type=event')} />
 
+      {/* Kalendarz miesięczny */}
+      <MonthCalendar
+        selected={selectedDay}
+        onSelect={(d) => setSelectedDay((prev) => (prev && dayKey(prev) === dayKey(d) ? null : d))}
+        marks={marks}
+      />
+
+      {selectedDay ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={{ color: c.text, fontWeight: '800', fontSize: font.body }}>{formatDate(selectedDay.toISOString())}</Text>
+          <Pressable onPress={() => setSelectedDay(null)}>
+            <Text style={{ color: c.primary, fontWeight: '700', fontSize: font.small }}>Pokaż wszystkie</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {sorted.length === 0 ? (
-        <EmptyState icon="calendar-outline" text="Brak zaplanowanych wydarzeń." />
+        <EmptyState icon="calendar-outline" text={selectedDay ? 'Brak wydarzeń tego dnia.' : 'Brak zaplanowanych wydarzeń.'} />
       ) : (
         Object.entries(groups).map(([day, items]) => (
           <View key={day} style={{ gap: spacing.md }}>

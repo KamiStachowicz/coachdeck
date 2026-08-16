@@ -8,6 +8,7 @@ import { useStore } from '@/src/store';
 import { getSport, PAYMENT_KINDS } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { PrimaryButton } from '@/components/ui';
+import { MonthCalendar } from '@/components/MonthCalendar';
 import type { PaymentKind } from '@/src/types';
 
 type Mode = 'player' | 'event' | 'payment';
@@ -32,7 +33,11 @@ export default function AddModal() {
   const [eventType, setEventType] = useState<'training' | 'match'>('training');
   const [opponent, setOpponent] = useState('');
   const [location, setLocation] = useState('');
-  const [dayOffset, setDayOffset] = useState(1); // 0 = dziś
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d;
+  });
   const [hour, setHour] = useState(18);
   const [minute, setMinute] = useState(0);
 
@@ -70,8 +75,7 @@ export default function AddModal() {
   const save = () => {
     if (!canSave) return;
     if (mode === 'event') {
-      const date = new Date();
-      date.setDate(date.getDate() + dayOffset);
+      const date = new Date(selectedDate);
       date.setHours(hour, minute, 0, 0);
       addEvent({
         teamId,
@@ -210,36 +214,10 @@ export default function AddModal() {
                 style={inputStyle}
               />
             </View>
-            {/* Wybór dnia */}
+            {/* Wybór daty – pełny kalendarz */}
             <View>
-              <Label>Dzień</Label>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-                {[
-                  { o: 0, l: 'Dziś' },
-                  { o: 1, l: 'Jutro' },
-                  { o: 2, l: 'Za 2 dni' },
-                  { o: 3, l: 'Za 3 dni' },
-                  { o: 7, l: 'Za tydzień' },
-                ].map(({ o, l }) => {
-                  const active = dayOffset === o;
-                  return (
-                    <Pressable
-                      key={o}
-                      onPress={() => setDayOffset(o)}
-                      style={{
-                        paddingHorizontal: spacing.md,
-                        paddingVertical: spacing.sm,
-                        borderRadius: radius.pill,
-                        backgroundColor: active ? c.primary : c.card,
-                        borderWidth: 1,
-                        borderColor: active ? c.primary : c.border,
-                      }}
-                    >
-                      <Text style={{ color: active ? '#fff' : c.text, fontWeight: '600', fontSize: font.small }}>{l}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+              <Label>Data</Label>
+              <MonthCalendar selected={selectedDate} onSelect={setSelectedDate} />
             </View>
 
             {/* Wybór godziny */}
