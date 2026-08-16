@@ -31,7 +31,7 @@ const MENU: {
 export default function MoreScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, openProfilePicker } = useStore();
+  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, openProfilePicker, backToStart } = useStore();
   const plan = currentPlan ? getPlan(currentPlan) : null;
   const menu = MENU.filter((m) => {
     if (m.route === '/league') return profile.show.league;
@@ -137,6 +137,29 @@ export default function MoreScreen() {
             </View>
           </Card>
         ))}
+
+        {/* Strona startowa */}
+        <Card onPress={backToStart}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: radius.md,
+                backgroundColor: c.cardAlt,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="home-outline" size={20} color={c.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: c.text, fontWeight: '700', fontSize: font.body }}>Strona startowa</Text>
+              <Text style={{ color: c.textMuted, fontSize: font.small }}>Wróć do ekranu powitalnego</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.tabInactive} />
+          </View>
+        </Card>
       </View>
 
       {/* Obsługiwane dyscypliny */}
