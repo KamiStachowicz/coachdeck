@@ -11,6 +11,7 @@ import { StoreProvider, useStore } from '@/src/store';
 import { brand, useTheme } from '@/src/theme';
 import { Onboarding } from '@/components/Onboarding';
 import { ProfilePicker } from '@/components/ProfilePicker';
+import { Landing } from '@/components/Landing';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -111,8 +112,9 @@ function HeaderBack() {
 }
 
 function OnboardingGate() {
-  const { onboarded, completeOnboarding, coachProfile, profilePickerOpen } = useStore();
+  const { onboarded, completeOnboarding, coachProfile, profilePickerOpen, entered } = useStore();
   if (onboarded === false) return <Onboarding onDone={completeOnboarding} />;
   if (onboarded === true && (coachProfile === null || profilePickerOpen)) return <ProfilePicker />;
+  if (onboarded === true && !entered) return <Landing />;
   return null;
 }
