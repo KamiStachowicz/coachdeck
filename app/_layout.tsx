@@ -70,6 +70,8 @@ function RootLayoutNav() {
           <Stack.Screen name="plans" options={{ title: 'Plany i cennik' }} />
           <Stack.Screen name="revenue" options={{ title: 'Panel przychodów' }} />
           <Stack.Screen name="card/[id]" options={{ title: 'Karta zawodnika' }} />
+          <Stack.Screen name="attendance/[eventId]" options={{ title: 'Frekwencja' }} />
+          <Stack.Screen name="awards" options={{ title: 'Nagrody i odznaki' }} />
         </Stack>
         <OnboardingGate />
       </ThemeProvider>
