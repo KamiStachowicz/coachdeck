@@ -18,6 +18,8 @@ import type {
   Registration,
   Camp,
   Announcement,
+  Review,
+  Booking,
 } from './types';
 import type { Lang } from './i18n';
 import type { SportId } from './types';
@@ -37,6 +39,7 @@ import {
   REGISTRATIONS,
   CAMPS,
   ANNOUNCEMENTS,
+  REVIEWS,
   enrichPlayer,
 } from './data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -128,6 +131,17 @@ interface StoreValue {
   toggleSpec: (spec: string) => void;
   listedInDirectory: boolean;
   setListed: (v: boolean) => void;
+  listingCity: string;
+  listingPrice: number;
+  listingBio: string;
+  setListing: (city: string, price: number, bio: string) => void;
+  reviewsFor: (coachId: string) => Review[];
+  addReview: (coachId: string, rating: number, text: string) => void;
+  bookings: Booking[];
+  addBooking: (coachId: string, slot: string) => void;
+  isBooked: (coachId: string, slot: string) => boolean;
+  favorites: string[];
+  toggleFavorite: (coachId: string) => void;
   profilePickerOpen: boolean;
   openProfilePicker: () => void;
   closeProfilePicker: () => void;
@@ -207,6 +221,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [coachSport, setCoachSportState] = useState<SportId | null>(null);
   const [coachSpecs, setCoachSpecs] = useState<string[]>([]);
   const [listedInDirectory, setListedState] = useState<boolean>(false);
+  const [listingCity, setListingCity] = useState<string>('Warszawa');
+  const [listingPrice, setListingPrice] = useState<number>(100);
+  const [listingBio, setListingBio] = useState<string>('Indywidualne podejście, elastyczne terminy.');
+  const [reviews, setReviews] = useState<Review[]>(REVIEWS);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const [entered, setEntered] = useState<boolean>(false);
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
@@ -520,6 +540,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setListedState(v);
         AsyncStorage.setItem(LISTED_KEY, v ? '1' : '0').catch(() => {});
       },
+      listingCity,
+      listingPrice,
+      listingBio,
+      setListing: (city, price, bio) => {
+        setListingCity(city);
+        setListingPrice(price);
+        setListingBio(bio);
+      },
+      reviewsFor: (coachId) =>
+        reviews.filter((r) => r.coachId === coachId).sort((a, b) => b.date.localeCompare(a.date)),
+      addReview: (coachId, rating, text) =>
+        setReviews((prev) => [
+          { id: nextId('rv'), coachId, author: 'Ty', rating, text, date: new Date().toISOString() },
+          ...prev,
+        ]),
+      bookings,
+      addBooking: (coachId, slot) =>
+        setBookings((prev) =>
+          prev.some((x) => x.coachId === coachId && x.slot === slot)
+            ? prev
+            : [...prev, { id: nextId('bk'), coachId, slot, date: new Date().toISOString() }],
+        ),
+      isBooked: (coachId, slot) => bookings.some((x) => x.coachId === coachId && x.slot === slot),
+      favorites,
+      toggleFavorite: (coachId) =>
+        setFavorites((prev) => (prev.includes(coachId) ? prev.filter((x) => x !== coachId) : [...prev, coachId])),
       profilePickerOpen: pickerOpen,
       openProfilePicker: () => setPickerOpen(true),
       closeProfilePicker: () => setPickerOpen(false),
@@ -621,7 +667,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, listingCity, listingPrice, listingBio, reviews, bookings, favorites, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
