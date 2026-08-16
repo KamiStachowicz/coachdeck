@@ -5,8 +5,9 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { StoreProvider } from '@/src/store';
+import { StoreProvider, useStore } from '@/src/store';
 import { brand } from '@/src/theme';
+import { Onboarding } from '@/components/Onboarding';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -70,7 +71,14 @@ function RootLayoutNav() {
           <Stack.Screen name="revenue" options={{ title: 'Panel przychodów' }} />
           <Stack.Screen name="card/[id]" options={{ title: 'Karta zawodnika' }} />
         </Stack>
+        <OnboardingGate />
       </ThemeProvider>
     </StoreProvider>
   );
+}
+
+function OnboardingGate() {
+  const { onboarded, completeOnboarding } = useStore();
+  if (onboarded !== false) return null;
+  return <Onboarding onDone={completeOnboarding} />;
 }
