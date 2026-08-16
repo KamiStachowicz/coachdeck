@@ -18,7 +18,21 @@ import type {
   Registration,
   Camp,
   Announcement,
+  DirectoryCoach,
+  Review,
 } from './types';
+
+/** Specjalizacje trenera personalnego. */
+export const SPECIALIZATIONS = [
+  'Siłownia',
+  'Przygotowanie motoryczne',
+  'Redukcja masy',
+  'Budowa masy',
+  'Dietetyka',
+  'Fitness',
+  'Rehabilitacja',
+  'Trening funkcjonalny',
+];
 
 /** Kolory do brandingu klubu. */
 export const BRAND_COLORS = ['#059669', '#2563EB', '#DC2626', '#7C3AED', '#EA580C', '#0891B2', '#DB2777', '#CA8A04'];
@@ -354,6 +368,25 @@ export const ANNOUNCEMENTS: Announcement[] = [
   { id: 'an1', title: 'Zmiana godziny treningu', body: 'W czwartek trening zaczynamy o 17:30 zamiast 18:00. Prosimy o punktualność.', date: payDate(-1), pinned: true },
   { id: 'an2', teamId: 't1', title: 'Mecz wyjazdowy', body: 'Zbiórka w sobotę o 13:00 pod klubem. Zabierzcie dwa komplety strojów.', date: payDate(-3), pinned: false },
   { id: 'an3', title: 'Składki za wrzesień', body: 'Przypominamy o opłaceniu składek do końca tygodnia. Można online w aplikacji.', date: payDate(-5), pinned: false },
+];
+
+/* ---------- Katalog trenerów (demo) ---------- */
+
+export const DIRECTORY_COACHES: DirectoryCoach[] = [
+  { id: 'dc1', name: 'Anna Kowalczyk', discipline: 'Trener personalny', city: 'Warszawa · Mokotów', rating: 4.9, reviewsCount: 47, pricePerHour: 120, bio: 'Redukcja masy i trening funkcjonalny. 8 lat doświadczenia.', color: '#F97316' },
+  { id: 'dc2', name: 'Marcin Zawada', discipline: 'Piłka nożna', city: 'Warszawa · Ursynów', rating: 4.7, reviewsCount: 31, pricePerHour: 90, bio: 'Trener UEFA B, praca z młodzieżą i technika indywidualna.', color: '#059669' },
+  { id: 'dc3', name: 'Katarzyna Lewicka', discipline: 'Pływanie', city: 'Warszawa · Wola', rating: 5.0, reviewsCount: 63, pricePerHour: 110, bio: 'Nauka i doskonalenie pływania, przygotowanie do zawodów.', color: '#0891B2' },
+  { id: 'dc4', name: 'Paweł Nowak', discipline: 'Przygotowanie motoryczne', city: 'Warszawa · Praga', rating: 4.6, reviewsCount: 22, pricePerHour: 130, bio: 'Przygotowanie motoryczne sportowców, prewencja urazów.', color: '#7C3AED' },
+  { id: 'dc5', name: 'Julia Dąbrowska', discipline: 'Tenis', city: 'Warszawa · Bemowo', rating: 4.8, reviewsCount: 18, pricePerHour: 140, bio: 'Tenis dla dzieci i dorosłych, każdy poziom.', color: '#CA8A04' },
+  { id: 'dc6', name: 'Tomasz Wójcik', discipline: 'Lekkoatletyka', city: 'Warszawa · Bielany', rating: 4.5, reviewsCount: 14, pricePerHour: 100, bio: 'Sprint i skoki, przygotowanie do egzaminów sprawnościowych.', color: '#DB2777' },
+];
+
+export const REVIEWS: Review[] = [
+  { id: 'rv1', coachId: 'dc1', author: 'Ewa M.', rating: 5, text: 'Świetne podejście, schudłam 8 kg w 3 miesiące!', date: payDate(-10) },
+  { id: 'rv2', coachId: 'dc1', author: 'Rafał K.', rating: 5, text: 'Profesjonalizm i motywacja na najwyższym poziomie.', date: payDate(-25) },
+  { id: 'rv3', coachId: 'dc1', author: 'Ania', rating: 4, text: 'Bardzo dobre treningi, polecam.', date: payDate(-40) },
+  { id: 'rv4', coachId: 'dc3', author: 'Marek', rating: 5, text: 'Córka nauczyła się pływać w miesiąc. Super!', date: payDate(-8) },
+  { id: 'rv5', coachId: 'dc2', author: 'Grzegorz', rating: 5, text: 'Syn zrobił ogromne postępy technicznie.', date: payDate(-15) },
 ];
 
 /** Parsuje wynik do liczby (mm:ss → sekundy; „6.20 m" → 6.20). */

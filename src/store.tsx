@@ -20,6 +20,7 @@ import type {
   Announcement,
 } from './types';
 import type { Lang } from './i18n';
+import type { SportId } from './types';
 import {
   TEAMS,
   PLAYERS,
@@ -51,6 +52,9 @@ const LANG_KEY = 'coachdeck.lang';
 const BRANDCOLOR_KEY = 'coachdeck.brandColor';
 const CLUBNAME_KEY = 'coachdeck.clubName';
 const CLUBEMOJI_KEY = 'coachdeck.clubEmoji';
+const SPORT_KEY = 'coachdeck.coachSport';
+const SPECS_KEY = 'coachdeck.coachSpecs';
+const LISTED_KEY = 'coachdeck.listed';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -71,6 +75,8 @@ export interface FinanceSummary {
 interface StoreValue {
   teams: Team[];
   players: Player[];
+  visibleTeams: Team[]; // przefiltrowane wg dyscypliny trenera
+  visiblePlayers: Player[];
   events: CoachEvent[];
   payments: Payment[];
   loading: boolean;
@@ -116,6 +122,12 @@ interface StoreValue {
   coachProfile: CoachProfile | null; // null = jeszcze niewybrany
   profile: ProfileConfig; // rozwiązany config (domyślnie drużynowy)
   setProfile: (p: CoachProfile | null) => void;
+  coachSport: SportId | null; // dyscyplina trenera (team/individual)
+  setCoachSport: (s: SportId | null) => void;
+  coachSpecs: string[]; // specjalizacje (personal)
+  toggleSpec: (spec: string) => void;
+  listedInDirectory: boolean;
+  setListed: (v: boolean) => void;
   profilePickerOpen: boolean;
   openProfilePicker: () => void;
   closeProfilePicker: () => void;
@@ -192,6 +204,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(backend);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [coachProfile, setCoachProfile] = useState<CoachProfile | null>(null);
+  const [coachSport, setCoachSportState] = useState<SportId | null>(null);
+  const [coachSpecs, setCoachSpecs] = useState<string[]>([]);
+  const [listedInDirectory, setListedState] = useState<boolean>(false);
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const [entered, setEntered] = useState<boolean>(false);
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
@@ -217,8 +232,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.getItem(BRANDCOLOR_KEY),
       AsyncStorage.getItem(CLUBNAME_KEY),
       AsyncStorage.getItem(CLUBEMOJI_KEY),
+      AsyncStorage.getItem(SPORT_KEY),
+      AsyncStorage.getItem(SPECS_KEY),
+      AsyncStorage.getItem(LISTED_KEY),
     ])
-      .then(([ob, pr, th, lg, bc, cn, ce]) => {
+      .then(([ob, pr, th, lg, bc, cn, ce, sp, spc, ls]) => {
         if (!active) return;
         setOnboarded(ob === '1');
         if (pr === 'team' || pr === 'individual' || pr === 'personal') setCoachProfile(pr);
@@ -227,6 +245,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (bc) setBrandColorState(bc);
         if (cn) setClubNameState(cn);
         if (ce) setClubEmojiState(ce);
+        if (sp) setCoachSportState(sp as SportId);
+        if (spc) { try { setCoachSpecs(JSON.parse(spc)); } catch {} }
+        if (ls === '1') setListedState(true);
       })
       .catch(() => {
         if (active) setOnboarded(false);
@@ -269,9 +290,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const trialActive = !subscribedPlan && trialMs > 0;
     const trialDaysLeft = Math.max(0, Math.ceil(trialMs / 86400000));
 
+    const matchTeams = coachSport ? teams.filter((tm) => tm.sport === coachSport) : teams;
+    const vTeams = coachSport && matchTeams.length > 0 ? matchTeams : teams;
+    const vTeamIds = new Set(vTeams.map((tm) => tm.id));
+
     return {
       teams,
       players,
+      visibleTeams: vTeams,
+      visiblePlayers: players.filter((p) => vTeamIds.has(p.teamId)),
       events,
       payments,
       loading,
@@ -475,6 +502,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
         }
       },
+      coachSport,
+      setCoachSport: (s) => {
+        setCoachSportState(s);
+        if (s) AsyncStorage.setItem(SPORT_KEY, s).catch(() => {});
+        else AsyncStorage.removeItem(SPORT_KEY).catch(() => {});
+      },
+      coachSpecs,
+      toggleSpec: (spec) =>
+        setCoachSpecs((prev) => {
+          const next = prev.includes(spec) ? prev.filter((x) => x !== spec) : [...prev, spec];
+          AsyncStorage.setItem(SPECS_KEY, JSON.stringify(next)).catch(() => {});
+          return next;
+        }),
+      listedInDirectory,
+      setListed: (v) => {
+        setListedState(v);
+        AsyncStorage.setItem(LISTED_KEY, v ? '1' : '0').catch(() => {});
+      },
       profilePickerOpen: pickerOpen,
       openProfilePicker: () => setPickerOpen(true),
       closeProfilePicker: () => setPickerOpen(false),
@@ -576,7 +621,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { Card, Badge, formatMoney } from '@/components/ui';
-import { SPORTS } from '@/src/data';
+import { SPORTS, getSport } from '@/src/data';
 import { useStore } from '@/src/store';
 import { getPlan } from '@/src/plans';
 
@@ -21,6 +21,7 @@ const MENU: {
   { icon: 'trophy-outline', label: 'Liga i wyniki', hint: 'Tabela ligowa i mecze', route: '/league' },
   { icon: 'search-outline', label: 'Skauting i transfery', hint: 'Obserwuj i podpisuj zawodników', route: '/scouting' },
   { icon: 'medal-outline', label: 'Nagrody i odznaki', hint: 'Zawodnik miesiąca, rankingi', route: '/awards' },
+  { icon: 'search-circle-outline', label: 'Znajdź trenera', hint: 'Katalog trenerów z okolicy + oceny', route: '/directory' },
   { icon: 'bar-chart-outline', label: 'Panel przychodów', hint: 'Subskrypcje i prowizje', route: '/revenue' },
   { icon: 'notifications-outline', label: 'Powiadomienia', hint: 'Przypomnienia i alerty', route: '/notifications' },
   { icon: 'megaphone-outline', label: 'Komunikacja', hint: 'Ogłoszenia do drużyny/rodziców', route: '/messages' },
@@ -33,7 +34,13 @@ const MENU: {
 export default function MoreScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, openProfilePicker, backToStart } = useStore();
+  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, openProfilePicker, backToStart, coachSport, coachSpecs, coachProfile } = useStore();
+  const disciplineLabel =
+    coachProfile === 'personal'
+      ? coachSpecs.slice(0, 3).join(', ')
+      : coachSport
+        ? getSport(coachSport).name
+        : '';
   const plan = currentPlan ? getPlan(currentPlan) : null;
   const menu = MENU.filter((m) => {
     if (m.route === '/league') return profile.show.league;
@@ -68,6 +75,11 @@ export default function MoreScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>{profile.name}</Text>
+            {disciplineLabel ? (
+              <Text style={{ color: c.textMuted, fontSize: font.small, marginTop: 2 }} numberOfLines={1}>
+                {disciplineLabel}
+              </Text>
+            ) : null}
             <View style={{ flexDirection: 'row', marginTop: 4 }}>
               <Badge label={planLabel} color={planColor} bg={planColor + '22'} />
             </View>

@@ -28,7 +28,7 @@ interface QuickAction {
 export default function Dashboard() {
   const c = useTheme();
   const router = useRouter();
-  const { teams, players, events, getTeam, financeSummary, profile, packagesByClient } = useStore();
+  const { visibleTeams: teams, visiblePlayers: players, events, getTeam, financeSummary, profile, packagesByClient } = useStore();
 
   const isPersonal = profile.id === 'personal';
   const isIndividual = profile.id === 'individual';
