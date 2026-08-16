@@ -214,3 +214,23 @@ export interface PersonalRecord {
   result: string; // np. "0:58.30", "6.20 m", "12–3"
   date: string; // ISO
 }
+
+/* ---------- Trener personalny: karnety i pomiary ---------- */
+
+export interface SessionPackage {
+  id: string;
+  clientId: string; // playerId
+  name: string; // np. "Karnet 10 wejść"
+  total: number; // liczba wejść
+  used: number; // wykorzystane
+  price: number; // PLN
+  date: string; // ISO – zakup
+}
+
+export interface BodyMeasurement {
+  id: string;
+  clientId: string; // playerId
+  weightKg: number;
+  date: string; // ISO
+  note?: string;
+}

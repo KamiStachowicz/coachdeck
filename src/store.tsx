@@ -13,6 +13,8 @@ import type {
   Transfer,
   TrainingGoal,
   PersonalRecord,
+  SessionPackage,
+  BodyMeasurement,
 } from './types';
 import {
   TEAMS,
@@ -25,6 +27,8 @@ import {
   SCOUT_TARGETS,
   TRAINING_GOALS,
   PERSONAL_RECORDS,
+  SESSION_PACKAGES,
+  MEASUREMENTS,
   enrichPlayer,
 } from './data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -74,6 +78,11 @@ interface StoreValue {
   removeGoal: (goalId: string) => void;
   recordsByPlayer: (playerId: string) => PersonalRecord[];
   addRecord: (playerId: string, event: string, result: string) => void;
+  packagesByClient: (clientId: string) => SessionPackage[];
+  addPackage: (clientId: string, name: string, total: number, price: number) => void;
+  useSession: (packageId: string) => void;
+  measurementsByClient: (clientId: string) => BodyMeasurement[];
+  addMeasurement: (clientId: string, weightKg: number) => void;
   currentPlan: PlanId | null; // aktywna subskrypcja (null = brak, np. w okresie próbnym)
   trialActive: boolean;
   trialDaysLeft: number;
@@ -123,6 +132,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [goals, setGoals] = useState<TrainingGoal[]>(TRAINING_GOALS);
   const [records, setRecords] = useState<PersonalRecord[]>(PERSONAL_RECORDS);
+  const [packages, setPackages] = useState<SessionPackage[]>(SESSION_PACKAGES);
+  const [measurements, setMeasurements] = useState<BodyMeasurement[]>(MEASUREMENTS);
   const [subscribedPlan, setSubscribedPlan] = useState<PlanId | null>(null);
   const [trialEndsAt] = useState<string>(() => {
     const d = new Date();
@@ -315,6 +326,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           { id: nextId('r'), playerId, event, result, date: new Date().toISOString() },
         ]),
+      packagesByClient: (clientId) =>
+        packages.filter((p) => p.clientId === clientId).sort((a, b) => b.date.localeCompare(a.date)),
+      addPackage: (clientId, name, total, price) =>
+        setPackages((prev) => [
+          ...prev,
+          { id: nextId('pk'), clientId, name, total, used: 0, price, date: new Date().toISOString() },
+        ]),
+      useSession: (packageId) =>
+        setPackages((prev) =>
+          prev.map((p) => (p.id === packageId && p.used < p.total ? { ...p, used: p.used + 1 } : p)),
+        ),
+      measurementsByClient: (clientId) =>
+        measurements.filter((m) => m.clientId === clientId).sort((a, b) => a.date.localeCompare(b.date)),
+      addMeasurement: (clientId, weightKg) =>
+        setMeasurements((prev) => [
+          ...prev,
+          { id: nextId('bm'), clientId, weightKg, date: new Date().toISOString() },
+        ]),
       currentPlan: subscribedPlan,
       trialActive,
       trialDaysLeft,
@@ -391,7 +420,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, subscribedPlan, trialEndsAt, onboarded, coachProfile, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, subscribedPlan, trialEndsAt, onboarded, coachProfile, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
