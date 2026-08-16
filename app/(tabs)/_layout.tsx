@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ColorValue } from 'react-native';
 
 import { useTheme } from '@/src/theme';
+import { useStore } from '@/src/store';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
 function tabIcon(name: keyof typeof Ionicons.glyphMap) {
@@ -14,6 +15,7 @@ function tabIcon(name: keyof typeof Ionicons.glyphMap) {
 
 export default function TabLayout() {
   const c = useTheme();
+  const { profile } = useStore();
 
   return (
     <Tabs
@@ -28,9 +30,9 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Pulpit', tabBarIcon: tabIcon('grid-outline') }} />
-      <Tabs.Screen name="teams" options={{ title: 'Drużyny', tabBarIcon: tabIcon('shield-outline') }} />
+      <Tabs.Screen name="teams" options={{ title: profile.labels.teamsTab, tabBarIcon: tabIcon('shield-outline') }} />
       <Tabs.Screen name="calendar" options={{ title: 'Kalendarz', tabBarIcon: tabIcon('calendar-outline') }} />
-      <Tabs.Screen name="players" options={{ title: 'Zawodnicy', tabBarIcon: tabIcon('people-outline') }} />
+      <Tabs.Screen name="players" options={{ title: profile.labels.playersTab, tabBarIcon: tabIcon('people-outline') }} />
       <Tabs.Screen name="more" options={{ title: 'Więcej', tabBarIcon: tabIcon('ellipsis-horizontal') }} />
     </Tabs>
   );

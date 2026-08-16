@@ -8,6 +8,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { StoreProvider, useStore } from '@/src/store';
 import { brand } from '@/src/theme';
 import { Onboarding } from '@/components/Onboarding';
+import { ProfilePicker } from '@/components/ProfilePicker';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -82,7 +83,8 @@ function RootLayoutNav() {
 }
 
 function OnboardingGate() {
-  const { onboarded, completeOnboarding } = useStore();
-  if (onboarded !== false) return null;
-  return <Onboarding onDone={completeOnboarding} />;
+  const { onboarded, completeOnboarding, coachProfile } = useStore();
+  if (onboarded === false) return <Onboarding onDone={completeOnboarding} />;
+  if (onboarded === true && coachProfile === null) return <ProfilePicker />;
+  return null;
 }

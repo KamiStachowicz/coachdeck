@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -29,8 +29,13 @@ const MENU: {
 export default function MoreScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { financeSummary, currentPlan, trialActive, trialDaysLeft } = useStore();
+  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, setProfile } = useStore();
   const plan = currentPlan ? getPlan(currentPlan) : null;
+  const menu = MENU.filter((m) => {
+    if (m.route === '/league') return profile.show.league;
+    if (m.route === '/scouting') return profile.show.scouting;
+    return true;
+  });
   const planLabel = trialActive
     ? `Okres próbny · ${trialDaysLeft} dni`
     : plan
@@ -58,11 +63,14 @@ export default function MoreScreen() {
             <Ionicons name="person" size={26} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>Trener</Text>
+            <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>{profile.name}</Text>
             <View style={{ flexDirection: 'row', marginTop: 4 }}>
               <Badge label={planLabel} color={planColor} bg={planColor + '22'} />
             </View>
           </View>
+          <Pressable onPress={() => setProfile(null)} hitSlop={10}>
+            <Text style={{ color: c.primary, fontWeight: '700', fontSize: font.small }}>Zmień</Text>
+          </Pressable>
         </View>
       </Card>
 
@@ -104,7 +112,7 @@ export default function MoreScreen() {
 
       {/* Menu */}
       <View style={{ gap: spacing.md }}>
-        {MENU.map((m) => (
+        {menu.map((m) => (
           <Card key={m.label} onPress={m.route ? () => router.push(m.route as any) : undefined}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
               <View
