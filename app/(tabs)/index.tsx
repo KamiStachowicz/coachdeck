@@ -20,7 +20,7 @@ import {
 export default function Dashboard() {
   const c = useTheme();
   const router = useRouter();
-  const { teams, players, events, getTeam, financeSummary } = useStore();
+  const { teams, players, events, getTeam, financeSummary, profile } = useStore();
 
   const now = new Date();
   const upcoming = [...events]
@@ -43,8 +43,8 @@ export default function Dashboard() {
 
       {/* Statystyki */}
       <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <StatTile label="Drużyny" value={teams.length} icon="shield-outline" />
-        <StatTile label="Zawodnicy" value={players.length} icon="people-outline" tint={c.info} />
+        <StatTile label={profile.labels.teamsTab} value={teams.length} icon="shield-outline" />
+        <StatTile label={profile.labels.playersTab} value={players.length} icon="people-outline" tint={c.info} />
       </View>
       <View style={{ flexDirection: 'row', gap: spacing.md }}>
         <StatTile label="Wydarzenia" value={events.length} icon="calendar-outline" tint={c.accent} />
@@ -133,7 +133,7 @@ export default function Dashboard() {
 
       {/* Moje drużyny */}
       <View>
-        <SectionTitle title="Moje drużyny" action="Zobacz wszystkie" onAction={() => router.push('/teams')} />
+        <SectionTitle title={`Moje ${profile.labels.teams}`} action="Zobacz wszystkie" onAction={() => router.push('/teams')} />
         <View style={{ gap: spacing.md }}>
           {teams.map((t) => {
             const sport = getSport(t.sport);
