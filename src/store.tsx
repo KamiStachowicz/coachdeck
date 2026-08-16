@@ -25,9 +25,12 @@ import {
   TRAINING_GOALS,
   enrichPlayer,
 } from './data';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isBackendConfigured } from './config';
 import { supabase, fetchInitialData, fetchPayments, paymentToRow } from './supabase';
 import { getPlan, TRIAL_DAYS, type PlanId, type FeatureKey } from './plans';
+
+const ONBOARDED_KEY = 'coachdeck.onboarded';
 
 /**
  * Magazyn stanu aplikacji.
@@ -68,6 +71,8 @@ interface StoreValue {
   currentPlan: PlanId | null; // aktywna subskrypcja (null = brak, np. w okresie próbnym)
   trialActive: boolean;
   trialDaysLeft: number;
+  onboarded: boolean | null; // null = jeszcze wczytywane
+  completeOnboarding: () => void;
   setPlan: (plan: PlanId) => void;
   hasFeature: (key: FeatureKey) => boolean;
   addPayment: (p: Omit<Payment, 'id'>) => void;
@@ -112,6 +117,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return d.toISOString();
   });
   const [loading, setLoading] = useState<boolean>(backend);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+
+  // Wczytanie flagi onboardingu.
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem(ONBOARDED_KEY)
+      .then((v) => {
+        if (active) setOnboarded(v === '1');
+      })
+      .catch(() => {
+        if (active) setOnboarded(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Ładowanie danych z bazy (tylko gdy backend skonfigurowany).
   useEffect(() => {
@@ -269,6 +290,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       currentPlan: subscribedPlan,
       trialActive,
       trialDaysLeft,
+      onboarded,
+      completeOnboarding: () => {
+        setOnboarded(true);
+        AsyncStorage.setItem(ONBOARDED_KEY, '1').catch(() => {});
+      },
       setPlan: (plan) => setSubscribedPlan(plan),
       // W okresie próbnym pełny dostęp; po nim tylko funkcje wykupionego planu.
       hasFeature: (key) =>
@@ -313,7 +339,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, subscribedPlan, trialEndsAt, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, subscribedPlan, trialEndsAt, onboarded, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
