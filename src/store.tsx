@@ -73,6 +73,9 @@ interface StoreValue {
   trialDaysLeft: number;
   onboarded: boolean | null; // null = jeszcze wczytywane
   completeOnboarding: () => void;
+  getAttendance: (eventId: string) => Record<string, boolean>;
+  setAttendance: (eventId: string, playerId: string, present: boolean) => void;
+  attendanceStats: (playerId: string) => { present: number; total: number; pct: number };
   setPlan: (plan: PlanId) => void;
   hasFeature: (key: FeatureKey) => boolean;
   addPayment: (p: Omit<Payment, 'id'>) => void;
@@ -118,6 +121,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   });
   const [loading, setLoading] = useState<boolean>(backend);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const [attendance, setAttendanceState] = useState<Record<string, Record<string, boolean>>>({
+    e1: { p1: true, p2: true, p3: true, p4: true, p5: false },
+    e3: { p6: true, p7: true },
+    e5: { p1: true, p2: false, p3: true, p4: true },
+  });
 
   // Wczytanie flagi onboardingu.
   useEffect(() => {
@@ -295,6 +303,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setOnboarded(true);
         AsyncStorage.setItem(ONBOARDED_KEY, '1').catch(() => {});
       },
+      getAttendance: (eventId) => attendance[eventId] ?? {},
+      setAttendance: (eventId, playerId, present) =>
+        setAttendanceState((prev) => ({
+          ...prev,
+          [eventId]: { ...(prev[eventId] ?? {}), [playerId]: present },
+        })),
+      attendanceStats: (playerId) => {
+        let present = 0;
+        let total = 0;
+        for (const ev of Object.values(attendance)) {
+          if (playerId in ev) {
+            total += 1;
+            if (ev[playerId]) present += 1;
+          }
+        }
+        return { present, total, pct: total > 0 ? Math.round((present / total) * 100) : 0 };
+      },
       setPlan: (plan) => setSubscribedPlan(plan),
       // W okresie próbnym pełny dostęp; po nim tylko funkcje wykupionego planu.
       hasFeature: (key) =>
@@ -339,7 +364,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, subscribedPlan, trialEndsAt, onboarded, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, subscribedPlan, trialEndsAt, onboarded, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

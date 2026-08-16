@@ -32,6 +32,9 @@ export default function AddModal() {
   const [eventType, setEventType] = useState<'training' | 'match'>('training');
   const [opponent, setOpponent] = useState('');
   const [location, setLocation] = useState('');
+  const [dayOffset, setDayOffset] = useState(1); // 0 = dziś
+  const [hour, setHour] = useState(18);
+  const [minute, setMinute] = useState(0);
 
   // pola płatności
   const [playerId, setPlayerId] = useState('');
@@ -68,8 +71,8 @@ export default function AddModal() {
     if (!canSave) return;
     if (mode === 'event') {
       const date = new Date();
-      date.setDate(date.getDate() + 1);
-      date.setHours(18, 0, 0, 0);
+      date.setDate(date.getDate() + dayOffset);
+      date.setHours(hour, minute, 0, 0);
       addEvent({
         teamId,
         type: eventType,
@@ -207,9 +210,56 @@ export default function AddModal() {
                 style={inputStyle}
               />
             </View>
-            <Text style={{ color: c.textMuted, fontSize: font.tiny }}>
-              Wydarzenie zostanie dodane na jutro, 18:00 (wybór daty w kolejnej wersji).
-            </Text>
+            {/* Wybór dnia */}
+            <View>
+              <Label>Dzień</Label>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+                {[
+                  { o: 0, l: 'Dziś' },
+                  { o: 1, l: 'Jutro' },
+                  { o: 2, l: 'Za 2 dni' },
+                  { o: 3, l: 'Za 3 dni' },
+                  { o: 7, l: 'Za tydzień' },
+                ].map(({ o, l }) => {
+                  const active = dayOffset === o;
+                  return (
+                    <Pressable
+                      key={o}
+                      onPress={() => setDayOffset(o)}
+                      style={{
+                        paddingHorizontal: spacing.md,
+                        paddingVertical: spacing.sm,
+                        borderRadius: radius.pill,
+                        backgroundColor: active ? c.primary : c.card,
+                        borderWidth: 1,
+                        borderColor: active ? c.primary : c.border,
+                      }}
+                    >
+                      <Text style={{ color: active ? '#fff' : c.text, fontWeight: '600', fontSize: font.small }}>{l}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Wybór godziny */}
+            <View>
+              <Label>Godzina</Label>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg }}>
+                <TimeStepper
+                  value={hour}
+                  onDelta={(d) => setHour((h) => (h + d + 24) % 24)}
+                  format={(v) => String(v).padStart(2, '0')}
+                />
+                <Text style={{ color: c.text, fontWeight: '900', fontSize: font.h2 }}>:</Text>
+                <TimeStepper
+                  value={minute}
+                  onDelta={(d) => setMinute((m) => (m + d + 60) % 60)}
+                  step={5}
+                  format={(v) => String(v).padStart(2, '0')}
+                />
+              </View>
+            </View>
           </>
         ) : mode === 'payment' ? (
           <>
@@ -359,5 +409,38 @@ export default function AddModal() {
         <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
       </ScrollView>
     </>
+  );
+}
+
+function TimeStepper({
+  value,
+  onDelta,
+  step = 1,
+  format,
+}: {
+  value: number;
+  onDelta: (d: number) => void;
+  step?: number;
+  format: (v: number) => string;
+}) {
+  const c = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+      <Pressable
+        onPress={() => onDelta(-step)}
+        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Ionicons name="remove" size={20} color={c.text} />
+      </Pressable>
+      <Text style={{ color: c.text, fontWeight: '900', fontSize: font.h2, width: 44, textAlign: 'center' }}>
+        {format(value)}
+      </Text>
+      <Pressable
+        onPress={() => onDelta(step)}
+        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Ionicons name="add" size={20} color={c.onPrimary} />
+      </Pressable>
+    </View>
   );
 }

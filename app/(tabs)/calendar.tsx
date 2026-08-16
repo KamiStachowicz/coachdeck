@@ -42,7 +42,7 @@ export default function CalendarScreen() {
               const sport = team ? getSport(team.sport) : null;
               const isMatch = e.type === 'match';
               return (
-                <Card key={e.id}>
+                <Card key={e.id} onPress={() => router.push(`/attendance/${e.id}`)}>
                   <View style={{ flexDirection: 'row', gap: spacing.md }}>
                     <View style={{ alignItems: 'center', width: 54 }}>
                       <Text style={{ color: c.text, fontWeight: '800' }}>{formatTime(e.date)}</Text>

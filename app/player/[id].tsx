@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
 import { getSport, PAYMENT_KINDS } from '@/src/data';
+import { badgesFor } from '@/src/gamification';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import {
   Card,
@@ -44,7 +45,7 @@ export default function PlayerDetail() {
   const c = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal } =
+  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal, attendanceStats } =
     useStore();
   const [goalText, setGoalText] = useState('');
 
@@ -62,6 +63,8 @@ export default function PlayerDetail() {
 
   const ratingColor = (v: number) => (v >= 80 ? c.primary : v >= 65 ? c.warning : c.danger);
 
+  const att = attendanceStats(player.id);
+  const badges = badgesFor(player, att.total > 0 ? att.pct : undefined);
   const payments = [...paymentsByPlayer(player.id)].sort((a, b) => b.dueDate.localeCompare(a.dueDate));
   const outstanding = payments
     .filter((p) => p.status !== 'paid')
@@ -98,6 +101,29 @@ export default function PlayerDetail() {
             </View>
           </View>
         </Card>
+
+        {/* Odznaki */}
+        {badges.length > 0 ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            {badges.map((b) => (
+              <View
+                key={b.id}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: 6,
+                  borderRadius: radius.pill,
+                  backgroundColor: b.color + '22',
+                }}
+              >
+                <Ionicons name={b.icon as any} size={14} color={b.color} />
+                <Text style={{ color: b.color, fontWeight: '700', fontSize: font.tiny }}>{b.label}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {/* Karta zawodnika (styl FIFA) */}
         <PrimaryButton
@@ -171,6 +197,7 @@ export default function PlayerDetail() {
               <StatCell label="Żółte" value={player.stats.yellow} />
               <StatCell label="Czerwone" value={player.stats.red} />
               <StatCell label="Gole/mecz" value={(player.stats.goals / Math.max(1, player.stats.apps)).toFixed(2)} />
+              {att.total > 0 ? <StatCell label="Frekwencja" value={`${att.pct}%`} /> : null}
             </View>
           </Card>
         </View>

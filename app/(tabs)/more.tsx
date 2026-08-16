@@ -18,6 +18,7 @@ const MENU: {
   { icon: 'card-outline', label: 'Finanse i składki', hint: 'Opłaty, składki, zajęcia', route: '/finances' },
   { icon: 'trophy-outline', label: 'Liga i wyniki', hint: 'Tabela ligowa i mecze', route: '/league' },
   { icon: 'search-outline', label: 'Skauting i transfery', hint: 'Obserwuj i podpisuj zawodników', route: '/scouting' },
+  { icon: 'medal-outline', label: 'Nagrody i odznaki', hint: 'Zawodnik miesiąca, rankingi', route: '/awards' },
   { icon: 'bar-chart-outline', label: 'Panel przychodów', hint: 'Subskrypcje i prowizje', route: '/revenue' },
   { icon: 'stats-chart-outline', label: 'Statystyki', hint: 'Analizy formy i frekwencji' },
   { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Biblioteka ćwiczeń' },
