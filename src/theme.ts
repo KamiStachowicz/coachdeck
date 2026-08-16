@@ -4,6 +4,7 @@
  * Obsługuje tryb jasny i ciemny.
  */
 import { useColorScheme } from '@/components/useColorScheme';
+import { useStore } from './store';
 
 const brand = {
   primary: '#059669', // emerald – boisko/energia
@@ -60,7 +61,12 @@ export type Palette = typeof palette.light;
 
 export function useTheme(): Palette {
   const scheme = useColorScheme() ?? 'light';
-  return palette[scheme];
+  const { themeMode, brandColor } = useStore();
+  const mode = themeMode === 'system' ? scheme : themeMode;
+  const base = palette[mode];
+  if (!brandColor) return base;
+  // Branding klubu: nadpisuje kolor przewodni.
+  return { ...base, primary: brandColor, primaryDark: brandColor };
 }
 
 export { palette, brand };

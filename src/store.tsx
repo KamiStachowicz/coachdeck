@@ -17,7 +17,9 @@ import type {
   BodyMeasurement,
   Registration,
   Camp,
+  Announcement,
 } from './types';
+import type { Lang } from './i18n';
 import {
   TEAMS,
   PLAYERS,
@@ -33,6 +35,7 @@ import {
   MEASUREMENTS,
   REGISTRATIONS,
   CAMPS,
+  ANNOUNCEMENTS,
   enrichPlayer,
 } from './data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -43,6 +46,13 @@ import { getProfile, type CoachProfile, type ProfileConfig } from './profiles';
 
 const ONBOARDED_KEY = 'coachdeck.onboarded';
 const PROFILE_KEY = 'coachdeck.profile';
+const THEME_KEY = 'coachdeck.theme';
+const LANG_KEY = 'coachdeck.lang';
+const BRANDCOLOR_KEY = 'coachdeck.brandColor';
+const CLUBNAME_KEY = 'coachdeck.clubName';
+const CLUBEMOJI_KEY = 'coachdeck.clubEmoji';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 /**
  * Magazyn stanu aplikacji.
@@ -112,6 +122,20 @@ interface StoreValue {
   entered: boolean; // czy użytkownik wszedł ze strony startowej (na sesję)
   enterApp: () => void;
   backToStart: () => void;
+  themeMode: ThemeMode;
+  setThemeMode: (m: ThemeMode) => void;
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  brandColor: string | null;
+  setBrandColor: (col: string | null) => void;
+  clubName: string | null;
+  setClubName: (name: string) => void;
+  clubEmoji: string | null;
+  setClubEmoji: (emoji: string) => void;
+  announcements: Announcement[];
+  addAnnouncement: (a: Omit<Announcement, 'id' | 'date' | 'pinned'>) => void;
+  deleteAnnouncement: (id: string) => void;
+  togglePin: (id: string) => void;
   getAttendance: (eventId: string) => Record<string, boolean>;
   setAttendance: (eventId: string, playerId: string, present: boolean) => void;
   attendanceStats: (playerId: string) => { present: number; total: number; pct: number };
@@ -170,20 +194,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [coachProfile, setCoachProfile] = useState<CoachProfile | null>(null);
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const [entered, setEntered] = useState<boolean>(false);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
+  const [lang, setLangState] = useState<Lang>('pl');
+  const [brandColor, setBrandColorState] = useState<string | null>(null);
+  const [clubName, setClubNameState] = useState<string | null>(null);
+  const [clubEmoji, setClubEmojiState] = useState<string | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(ANNOUNCEMENTS);
   const [attendance, setAttendanceState] = useState<Record<string, Record<string, boolean>>>({
     e1: { p1: true, p2: true, p3: true, p4: true, p5: false },
     e3: { p6: true, p7: true },
     e5: { p1: true, p2: false, p3: true, p4: true },
   });
 
-  // Wczytanie flagi onboardingu i profilu trenera.
+  // Wczytanie ustawień, flagi onboardingu i profilu trenera.
   useEffect(() => {
     let active = true;
-    Promise.all([AsyncStorage.getItem(ONBOARDED_KEY), AsyncStorage.getItem(PROFILE_KEY)])
-      .then(([ob, pr]) => {
+    Promise.all([
+      AsyncStorage.getItem(ONBOARDED_KEY),
+      AsyncStorage.getItem(PROFILE_KEY),
+      AsyncStorage.getItem(THEME_KEY),
+      AsyncStorage.getItem(LANG_KEY),
+      AsyncStorage.getItem(BRANDCOLOR_KEY),
+      AsyncStorage.getItem(CLUBNAME_KEY),
+      AsyncStorage.getItem(CLUBEMOJI_KEY),
+    ])
+      .then(([ob, pr, th, lg, bc, cn, ce]) => {
         if (!active) return;
         setOnboarded(ob === '1');
         if (pr === 'team' || pr === 'individual' || pr === 'personal') setCoachProfile(pr);
+        if (th === 'light' || th === 'dark' || th === 'system') setThemeModeState(th);
+        if (lg === 'pl' || lg === 'en') setLangState(lg);
+        if (bc) setBrandColorState(bc);
+        if (cn) setClubNameState(cn);
+        if (ce) setClubEmojiState(ce);
       })
       .catch(() => {
         if (active) setOnboarded(false);
@@ -438,6 +481,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       entered,
       enterApp: () => setEntered(true),
       backToStart: () => setEntered(false),
+      themeMode,
+      setThemeMode: (m) => {
+        setThemeModeState(m);
+        AsyncStorage.setItem(THEME_KEY, m).catch(() => {});
+      },
+      lang,
+      setLang: (l) => {
+        setLangState(l);
+        AsyncStorage.setItem(LANG_KEY, l).catch(() => {});
+      },
+      brandColor,
+      setBrandColor: (col) => {
+        setBrandColorState(col);
+        if (col) AsyncStorage.setItem(BRANDCOLOR_KEY, col).catch(() => {});
+        else AsyncStorage.removeItem(BRANDCOLOR_KEY).catch(() => {});
+      },
+      clubName,
+      setClubName: (name) => {
+        setClubNameState(name);
+        AsyncStorage.setItem(CLUBNAME_KEY, name).catch(() => {});
+      },
+      clubEmoji,
+      setClubEmoji: (emoji) => {
+        setClubEmojiState(emoji);
+        AsyncStorage.setItem(CLUBEMOJI_KEY, emoji).catch(() => {});
+      },
+      announcements,
+      addAnnouncement: (a) =>
+        setAnnouncements((prev) => [
+          { ...a, id: nextId('an'), date: new Date().toISOString(), pinned: false },
+          ...prev,
+        ]),
+      deleteAnnouncement: (id) => setAnnouncements((prev) => prev.filter((x) => x.id !== id)),
+      togglePin: (id) => setAnnouncements((prev) => prev.map((x) => (x.id === id ? { ...x, pinned: !x.pinned } : x))),
       getAttendance: (eventId) => attendance[eventId] ?? {},
       setAttendance: (eventId, playerId, present) =>
         setAttendanceState((prev) => ({
@@ -499,7 +576,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, pickerOpen, entered, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

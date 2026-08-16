@@ -56,39 +56,50 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
     <StoreProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? CoachDark : CoachLight}>
-        <Stack
-          screenOptions={{
-            headerBackVisible: false,
-            headerLeft: () => <HeaderBack />,
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Dodaj' }} />
-          <Stack.Screen name="team/[id]" options={{ title: 'Drużyna' }} />
-          <Stack.Screen name="player/[id]" options={{ title: 'Zawodnik' }} />
-          <Stack.Screen name="finances" options={{ title: 'Finanse i składki' }} />
-          <Stack.Screen name="tactics/[teamId]" options={{ title: 'Taktyka' }} />
-          <Stack.Screen name="league" options={{ title: 'Liga i wyniki' }} />
-          <Stack.Screen name="result" options={{ title: 'Wynik meczu' }} />
-          <Stack.Screen name="scouting" options={{ title: 'Skauting i transfery' }} />
-          <Stack.Screen name="plans" options={{ title: 'Plany i cennik' }} />
-          <Stack.Screen name="revenue" options={{ title: 'Panel przychodów' }} />
-          <Stack.Screen name="card/[id]" options={{ title: 'Karta zawodnika' }} />
-          <Stack.Screen name="attendance/[eventId]" options={{ title: 'Frekwencja' }} />
-          <Stack.Screen name="awards" options={{ title: 'Nagrody i odznaki' }} />
-          <Stack.Screen name="training" options={{ title: 'Plany treningowe' }} />
-          <Stack.Screen name="training/[id]" options={{ title: 'Konspekt treningu' }} />
-          <Stack.Screen name="registrations" options={{ title: 'Nabór i zapisy' }} />
-          <Stack.Screen name="camps" options={{ title: 'Obozy i eventy' }} />
-        </Stack>
-        <OnboardingGate />
-      </ThemeProvider>
+      <ThemedApp />
     </StoreProvider>
+  );
+}
+
+function ThemedApp() {
+  const colorScheme = useColorScheme();
+  const { themeMode } = useStore();
+  const dark = themeMode === 'system' ? colorScheme === 'dark' : themeMode === 'dark';
+
+  return (
+    <ThemeProvider value={dark ? CoachDark : CoachLight}>
+      <Stack
+        screenOptions={{
+          headerBackVisible: false,
+          headerLeft: () => <HeaderBack />,
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Dodaj' }} />
+        <Stack.Screen name="team/[id]" options={{ title: 'Drużyna' }} />
+        <Stack.Screen name="player/[id]" options={{ title: 'Zawodnik' }} />
+        <Stack.Screen name="finances" options={{ title: 'Finanse i składki' }} />
+        <Stack.Screen name="tactics/[teamId]" options={{ title: 'Taktyka' }} />
+        <Stack.Screen name="league" options={{ title: 'Liga i wyniki' }} />
+        <Stack.Screen name="result" options={{ title: 'Wynik meczu' }} />
+        <Stack.Screen name="scouting" options={{ title: 'Skauting i transfery' }} />
+        <Stack.Screen name="plans" options={{ title: 'Plany i cennik' }} />
+        <Stack.Screen name="revenue" options={{ title: 'Panel przychodów' }} />
+        <Stack.Screen name="card/[id]" options={{ title: 'Karta zawodnika' }} />
+        <Stack.Screen name="attendance/[eventId]" options={{ title: 'Frekwencja' }} />
+        <Stack.Screen name="awards" options={{ title: 'Nagrody i odznaki' }} />
+        <Stack.Screen name="training" options={{ title: 'Plany treningowe' }} />
+        <Stack.Screen name="training/[id]" options={{ title: 'Konspekt treningu' }} />
+        <Stack.Screen name="registrations" options={{ title: 'Nabór i zapisy' }} />
+        <Stack.Screen name="camps" options={{ title: 'Obozy i eventy' }} />
+        <Stack.Screen name="messages" options={{ title: 'Komunikacja' }} />
+        <Stack.Screen name="settings" options={{ title: 'Ustawienia' }} />
+        <Stack.Screen name="reports" options={{ title: 'Raporty' }} />
+      </Stack>
+      <OnboardingGate />
+    </ThemeProvider>
   );
 }
 

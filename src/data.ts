@@ -17,7 +17,13 @@ import type {
   BodyMeasurement,
   Registration,
   Camp,
+  Announcement,
 } from './types';
+
+/** Kolory do brandingu klubu. */
+export const BRAND_COLORS = ['#059669', '#2563EB', '#DC2626', '#7C3AED', '#EA580C', '#0891B2', '#DB2777', '#CA8A04'];
+/** Emoji-logo do wyboru. */
+export const CLUB_EMOJIS = ['🦅', '⚽', '🏀', '🐬', '🦁', '🐺', '🔥', '⭐', '🛡️', '🏆'];
 
 /** Sporty zespołowe (mają skład/formację, gole itd.) vs indywidualne. */
 export function isTeamSport(sport: SportId): boolean {
@@ -342,6 +348,12 @@ export const CAMPS: Camp[] = [
   { id: 'cmp1', title: 'Obóz letni – Zakopane', location: 'Zakopane', dateRange: '1–8 lipca', price: 1800, deposit: 400, capacity: 30, signups: 22 },
   { id: 'cmp2', title: 'Camp pływacki', location: 'Spała', dateRange: '15–20 sierpnia', price: 1400, deposit: 300, capacity: 20, signups: 20 },
   { id: 'cmp3', title: 'Turniej weekendowy', location: 'Łódź', dateRange: '12–13 października', price: 250, deposit: 100, capacity: 40, signups: 12 },
+];
+
+export const ANNOUNCEMENTS: Announcement[] = [
+  { id: 'an1', title: 'Zmiana godziny treningu', body: 'W czwartek trening zaczynamy o 17:30 zamiast 18:00. Prosimy o punktualność.', date: payDate(-1), pinned: true },
+  { id: 'an2', teamId: 't1', title: 'Mecz wyjazdowy', body: 'Zbiórka w sobotę o 13:00 pod klubem. Zabierzcie dwa komplety strojów.', date: payDate(-3), pinned: false },
+  { id: 'an3', title: 'Składki za wrzesień', body: 'Przypominamy o opłaceniu składek do końca tygodnia. Można online w aplikacji.', date: payDate(-5), pinned: false },
 ];
 
 /** Parsuje wynik do liczby (mm:ss → sekundy; „6.20 m" → 6.20). */
