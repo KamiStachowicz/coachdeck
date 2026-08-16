@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
-import { getSport, PAYMENT_KINDS } from '@/src/data';
+import { getSport, PAYMENT_KINDS, isTeamSport } from '@/src/data';
 import { badgesFor } from '@/src/gamification';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import {
@@ -45,9 +45,11 @@ export default function PlayerDetail() {
   const c = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal, attendanceStats } =
+  const { getPlayer, getTeam, paymentsByPlayer, markPaid, markUnpaid, goalsByPlayer, addGoal, toggleGoal, removeGoal, attendanceStats, recordsByPlayer, addRecord } =
     useStore();
   const [goalText, setGoalText] = useState('');
+  const [recEvent, setRecEvent] = useState('');
+  const [recResult, setRecResult] = useState('');
 
   const player = getPlayer(id);
   if (!player) {
@@ -65,6 +67,8 @@ export default function PlayerDetail() {
 
   const att = attendanceStats(player.id);
   const badges = badgesFor(player, att.total > 0 ? att.pct : undefined);
+  const teamSport = sport ? isTeamSport(sport.id) : true;
+  const records = recordsByPlayer(player.id);
   const payments = [...paymentsByPlayer(player.id)].sort((a, b) => b.dueDate.localeCompare(a.dueDate));
   const outstanding = payments
     .filter((p) => p.status !== 'paid')
@@ -184,20 +188,83 @@ export default function PlayerDetail() {
           </Card>
         </View>
 
-        {/* Statystyki sezonu */}
+        {/* Statystyki sezonu (sporty zespołowe) */}
+        {teamSport ? (
+          <View>
+            <SectionTitle title="Statystyki sezonu" />
+            <Card>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                <StatCell label="Mecze" value={player.stats.apps} />
+                <StatCell label="Gole" value={player.stats.goals} />
+                <StatCell label="Asysty" value={player.stats.assists} />
+                <StatCell label="Minuty" value={player.stats.minutes} />
+                <StatCell label="Śr. ocena" value={player.stats.avgRating.toFixed(1)} />
+                <StatCell label="Żółte" value={player.stats.yellow} />
+                <StatCell label="Czerwone" value={player.stats.red} />
+                <StatCell label="Gole/mecz" value={(player.stats.goals / Math.max(1, player.stats.apps)).toFixed(2)} />
+                {att.total > 0 ? <StatCell label="Frekwencja" value={`${att.pct}%`} /> : null}
+              </View>
+            </Card>
+          </View>
+        ) : (
+          <View>
+            <SectionTitle title="Podsumowanie" />
+            <Card>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                <StatCell label="Starty" value={player.stats.apps} />
+                <StatCell label="Śr. ocena" value={player.stats.avgRating.toFixed(1)} />
+                {att.total > 0 ? <StatCell label="Frekwencja" value={`${att.pct}%`} /> : null}
+              </View>
+            </Card>
+          </View>
+        )}
+
+        {/* Rekordy życiowe / wyniki */}
         <View>
-          <SectionTitle title="Statystyki sezonu" />
-          <Card>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <StatCell label="Mecze" value={player.stats.apps} />
-              <StatCell label="Gole" value={player.stats.goals} />
-              <StatCell label="Asysty" value={player.stats.assists} />
-              <StatCell label="Minuty" value={player.stats.minutes} />
-              <StatCell label="Śr. ocena" value={player.stats.avgRating.toFixed(1)} />
-              <StatCell label="Żółte" value={player.stats.yellow} />
-              <StatCell label="Czerwone" value={player.stats.red} />
-              <StatCell label="Gole/mecz" value={(player.stats.goals / Math.max(1, player.stats.apps)).toFixed(2)} />
-              {att.total > 0 ? <StatCell label="Frekwencja" value={`${att.pct}%`} /> : null}
+          <SectionTitle title="Rekordy życiowe" />
+          <Card style={{ gap: spacing.md }}>
+            {records.length === 0 ? (
+              <Text style={{ color: c.textMuted, fontSize: font.small }}>Brak rekordów. Dodaj pierwszy poniżej.</Text>
+            ) : (
+              records.map((r) => (
+                <View key={r.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                  <Ionicons name="stopwatch-outline" size={18} color={c.info} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: c.text, fontWeight: '700', fontSize: font.small }}>{r.event}</Text>
+                    <Text style={{ color: c.textMuted, fontSize: font.tiny }}>{formatDate(r.date)}</Text>
+                  </View>
+                  <Text style={{ color: c.text, fontWeight: '900' }}>{r.result}</Text>
+                </View>
+              ))
+            )}
+            {/* dodawanie */}
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <TextInput
+                value={recEvent}
+                onChangeText={setRecEvent}
+                placeholder="Konkurencja (np. 100 m kraul)"
+                placeholderTextColor={c.tabInactive}
+                style={{ flex: 1.5, backgroundColor: c.cardAlt, borderRadius: radius.md, padding: spacing.md, color: c.text }}
+              />
+              <TextInput
+                value={recResult}
+                onChangeText={setRecResult}
+                placeholder="Wynik"
+                placeholderTextColor={c.tabInactive}
+                style={{ flex: 1, backgroundColor: c.cardAlt, borderRadius: radius.md, padding: spacing.md, color: c.text }}
+              />
+              <Pressable
+                onPress={() => {
+                  if (recEvent.trim() && recResult.trim()) {
+                    addRecord(player.id, recEvent.trim(), recResult.trim());
+                    setRecEvent('');
+                    setRecResult('');
+                  }
+                }}
+                style={{ paddingHorizontal: spacing.md, justifyContent: 'center', borderRadius: radius.md, backgroundColor: c.primary }}
+              >
+                <Ionicons name="add" size={20} color={c.onPrimary} />
+              </Pressable>
             </View>
           </Card>
         </View>

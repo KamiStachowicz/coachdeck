@@ -204,3 +204,13 @@ export interface TrainingGoal {
   text: string;
   done: boolean;
 }
+
+/* ---------- Rekordy / wyniki indywidualne (pływanie, LA, tenis...) ---------- */
+
+export interface PersonalRecord {
+  id: string;
+  playerId: string;
+  event: string; // np. "100 m kraul", "Skok w dal", "Bilans singla"
+  result: string; // np. "0:58.30", "6.20 m", "12–3"
+  date: string; // ISO
+}

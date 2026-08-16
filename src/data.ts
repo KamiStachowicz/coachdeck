@@ -1,5 +1,6 @@
 import type {
   Sport,
+  SportId,
   Team,
   Player,
   PlayerCore,
@@ -11,7 +12,13 @@ import type {
   MatchResult,
   ScoutTarget,
   TrainingGoal,
+  PersonalRecord,
 } from './types';
+
+/** Sporty zespołowe (mają skład/formację, gole itd.) vs indywidualne. */
+export function isTeamSport(sport: SportId): boolean {
+  return ['football', 'basketball', 'volleyball', 'handball', 'hockey'].includes(sport);
+}
 
 export const SPORTS: Sport[] = [
   { id: 'football', name: 'Piłka nożna', icon: 'football-outline', color: '#059669', positions: ['Bramkarz', 'Obrońca', 'Pomocnik', 'Napastnik'] },
@@ -34,6 +41,8 @@ export const TEAMS: Team[] = [
   { id: 't1', name: 'Orły Warszawa', sport: 'football', category: 'Seniorzy', season: SEASON, colorAccent: '#059669' },
   { id: 't2', name: 'Orlęta U-15', sport: 'football', category: 'U-15', season: SEASON, colorAccent: '#10B981' },
   { id: 't3', name: 'Wisła Basket', sport: 'basketball', category: 'Juniorzy', season: SEASON, colorAccent: '#EA580C' },
+  { id: 't4', name: 'Delfiny Kraków', sport: 'swimming', category: 'Open', season: SEASON, colorAccent: '#0891B2' },
+  { id: 't5', name: 'LKS Sokół – LA', sport: 'athletics', category: 'Juniorzy', season: SEASON, colorAccent: '#DB2777' },
 ];
 
 function p(
@@ -145,6 +154,13 @@ const RAW_PLAYERS: PlayerCore[] = [
   p('p7', 't2', 'Igor', 'Kamiński', 10, 'Napastnik', 2010, { fitness: 74, technique: 75, tactics: 58, mentality: 70 }),
   p('p8', 't3', 'Bartosz', 'Mazur', 23, 'Rozgrywający', 2005, { fitness: 80, technique: 82, tactics: 78, mentality: 79 }),
   p('p9', 't3', 'Filip', 'Krawczyk', 12, 'Środkowy', 2004, { fitness: 84, technique: 76, tactics: 74, mentality: 77 }, 'suspended'),
+  // Pływacy (Delfiny Kraków)
+  p('p10', 't4', 'Zofia', 'Lis', 0, 'Kraul', 2006, { fitness: 88, technique: 85, tactics: 70, mentality: 84 }),
+  p('p11', 't4', 'Antoni', 'Duda', 0, 'Klasyk', 2005, { fitness: 86, technique: 82, tactics: 68, mentality: 80 }),
+  p('p12', 't4', 'Maja', 'Sawicka', 0, 'Motylek', 2007, { fitness: 84, technique: 88, tactics: 66, mentality: 82 }),
+  // Lekkoatleci (LKS Sokół – LA)
+  p('p13', 't5', 'Jakub', 'Ostrowski', 0, 'Sprint', 2006, { fitness: 90, technique: 78, tactics: 60, mentality: 83 }),
+  p('p14', 't5', 'Lena', 'Górska', 0, 'Skoki', 2007, { fitness: 87, technique: 84, tactics: 62, mentality: 80 }),
 ];
 
 export const PLAYERS: Player[] = RAW_PLAYERS.map(enrichPlayer);
@@ -277,6 +293,18 @@ export const RESULTS: MatchResult[] = [
   { id: 'm3', teamId: 't1', opponent: 'Ursus', date: payDate(-14), home: true, goalsFor: 1, goalsAgainst: 0, competition: 'Liga' },
   { id: 'm4', teamId: 't1', opponent: 'Legia II', date: payDate(-7), home: false, goalsFor: 0, goalsAgainst: 2, competition: 'Liga' },
   { id: 'm5', teamId: 't1', opponent: 'Świt', date: payDate(-3), home: true, goalsFor: 4, goalsAgainst: 1, competition: 'Puchar' },
+];
+
+/* ---------- Rekordy życiowe (dyscypliny indywidualne) ---------- */
+
+export const PERSONAL_RECORDS: PersonalRecord[] = [
+  { id: 'r1', playerId: 'p10', event: '100 m kraul', result: '0:58.30', date: payDate(-20) },
+  { id: 'r2', playerId: 'p10', event: '200 m kraul', result: '2:09.80', date: payDate(-6) },
+  { id: 'r3', playerId: 'p11', event: '100 m klasyczny', result: '1:07.40', date: payDate(-13) },
+  { id: 'r4', playerId: 'p12', event: '100 m motylkowy', result: '1:03.10', date: payDate(-9) },
+  { id: 'r5', playerId: 'p13', event: '100 m', result: '11.24 s', date: payDate(-15) },
+  { id: 'r6', playerId: 'p13', event: '200 m', result: '22.90 s', date: payDate(-2) },
+  { id: 'r7', playerId: 'p14', event: 'Skok w dal', result: '5.85 m', date: payDate(-11) },
 ];
 
 /* ---------- Skauting: obserwowani zawodnicy ---------- */

@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
-import { getSport } from '@/src/data';
+import { getSport, isTeamSport } from '@/src/data';
 import { useTheme, spacing, font } from '@/src/theme';
 import {
   Card,
@@ -34,6 +34,7 @@ export default function TeamDetail() {
   const roster = playersByTeam(team.id);
   const events = [...eventsByTeam(team.id)].sort((a, b) => a.date.localeCompare(b.date));
   const injured = roster.filter((p) => p.status === 'injured').length;
+  const teamSport = isTeamSport(team.sport);
 
   return (
     <>
@@ -84,23 +85,25 @@ export default function TeamDetail() {
         </Card>
 
         {/* Akcje */}
-        <View style={{ flexDirection: 'row', gap: spacing.md }}>
-          <PrimaryButton
-            label="Taktyka i skład"
-            icon="grid-outline"
-            onPress={() => router.push(`/tactics/${team.id}`)}
-            style={{ flex: 1 }}
-          />
-          <PrimaryButton
-            label="Liga"
-            icon="trophy-outline"
-            onPress={() => router.push('/league')}
-            style={{ flex: 1, backgroundColor: c.accent }}
-          />
-        </View>
+        {teamSport ? (
+          <View style={{ flexDirection: 'row', gap: spacing.md }}>
+            <PrimaryButton
+              label="Taktyka i skład"
+              icon="grid-outline"
+              onPress={() => router.push(`/tactics/${team.id}`)}
+              style={{ flex: 1 }}
+            />
+            <PrimaryButton
+              label="Liga"
+              icon="trophy-outline"
+              onPress={() => router.push('/league')}
+              style={{ flex: 1, backgroundColor: c.accent }}
+            />
+          </View>
+        ) : null}
 
-        {/* Najlepsi strzelcy */}
-        {roster.length > 0 ? (
+        {/* Najlepsi strzelcy (sporty zespołowe) */}
+        {teamSport && roster.length > 0 ? (
           <View>
             <SectionTitle title="Najlepsi strzelcy" />
             <Card style={{ gap: spacing.md }}>
