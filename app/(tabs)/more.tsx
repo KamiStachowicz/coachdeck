@@ -31,7 +31,7 @@ const MENU: {
 export default function MoreScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, setProfile } = useStore();
+  const { financeSummary, currentPlan, trialActive, trialDaysLeft, profile, openProfilePicker } = useStore();
   const plan = currentPlan ? getPlan(currentPlan) : null;
   const menu = MENU.filter((m) => {
     if (m.route === '/league') return profile.show.league;
@@ -70,7 +70,7 @@ export default function MoreScreen() {
               <Badge label={planLabel} color={planColor} bg={planColor + '22'} />
             </View>
           </View>
-          <Pressable onPress={() => setProfile(null)} hitSlop={10}>
+          <Pressable onPress={openProfilePicker} hitSlop={10}>
             <Text style={{ color: c.primary, fontWeight: '700', fontSize: font.small }}>Zmień</Text>
           </Pressable>
         </View>

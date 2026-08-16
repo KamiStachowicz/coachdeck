@@ -106,6 +106,9 @@ interface StoreValue {
   coachProfile: CoachProfile | null; // null = jeszcze niewybrany
   profile: ProfileConfig; // rozwiązany config (domyślnie drużynowy)
   setProfile: (p: CoachProfile | null) => void;
+  profilePickerOpen: boolean;
+  openProfilePicker: () => void;
+  closeProfilePicker: () => void;
   getAttendance: (eventId: string) => Record<string, boolean>;
   setAttendance: (eventId: string, playerId: string, present: boolean) => void;
   attendanceStats: (playerId: string) => { present: number; total: number; pct: number };
@@ -162,6 +165,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(backend);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [coachProfile, setCoachProfile] = useState<CoachProfile | null>(null);
+  const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const [attendance, setAttendanceState] = useState<Record<string, Record<string, boolean>>>({
     e1: { p1: true, p2: true, p3: true, p4: true, p5: false },
     e3: { p6: true, p7: true },
@@ -417,9 +421,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       profile: getProfile(coachProfile),
       setProfile: (p) => {
         setCoachProfile(p);
-        if (p) AsyncStorage.setItem(PROFILE_KEY, p).catch(() => {});
-        else AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+        if (p) {
+          AsyncStorage.setItem(PROFILE_KEY, p).catch(() => {});
+          setPickerOpen(false); // po wyborze zamknij picker
+        } else {
+          AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+        }
       },
+      profilePickerOpen: pickerOpen,
+      openProfilePicker: () => setPickerOpen(true),
+      closeProfilePicker: () => setPickerOpen(false),
       getAttendance: (eventId) => attendance[eventId] ?? {},
       setAttendance: (eventId, playerId, present) =>
         setAttendanceState((prev) => ({
@@ -481,7 +492,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, pickerOpen, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
