@@ -72,6 +72,8 @@ function RootLayoutNav() {
           <Stack.Screen name="card/[id]" options={{ title: 'Karta zawodnika' }} />
           <Stack.Screen name="attendance/[eventId]" options={{ title: 'Frekwencja' }} />
           <Stack.Screen name="awards" options={{ title: 'Nagrody i odznaki' }} />
+          <Stack.Screen name="training" options={{ title: 'Plany treningowe' }} />
+          <Stack.Screen name="training/[id]" options={{ title: 'Konspekt treningu' }} />
         </Stack>
         <OnboardingGate />
       </ThemeProvider>
