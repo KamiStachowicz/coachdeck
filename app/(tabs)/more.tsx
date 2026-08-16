@@ -21,7 +21,7 @@ const MENU: {
   { icon: 'medal-outline', label: 'Nagrody i odznaki', hint: 'Zawodnik miesiąca, rankingi', route: '/awards' },
   { icon: 'bar-chart-outline', label: 'Panel przychodów', hint: 'Subskrypcje i prowizje', route: '/revenue' },
   { icon: 'stats-chart-outline', label: 'Statystyki', hint: 'Analizy formy i frekwencji' },
-  { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Biblioteka ćwiczeń' },
+  { icon: 'clipboard-outline', label: 'Plany treningowe', hint: 'Konspekty i biblioteka ćwiczeń', route: '/training' },
   { icon: 'chatbubbles-outline', label: 'Komunikacja', hint: 'Wiadomości do drużyny' },
   { icon: 'settings-outline', label: 'Ustawienia', hint: 'Konto i preferencje' },
 ];
