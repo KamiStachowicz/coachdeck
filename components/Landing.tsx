@@ -4,17 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
+import { useT } from '@/src/i18n';
 import { spacing, font, radius } from '@/src/theme';
 
-const FEATURES: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
-  { icon: 'people-outline', text: 'Zawodnicy, kadra i frekwencja' },
-  { icon: 'stats-chart-outline', text: 'Statystyki, rozwój i taktyka' },
-  { icon: 'card-outline', text: 'Składki i płatności online' },
-];
-
 export function Landing() {
-  const { enterApp, profile, openProfilePicker } = useStore();
+  const { enterApp, profile, openProfilePicker, clubName, clubEmoji } = useStore();
+  const t = useT();
   const { width, height } = useWindowDimensions();
+
+  const FEATURES: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
+    { icon: 'people-outline', text: t('landing.f1') },
+    { icon: 'stats-chart-outline', text: t('landing.f2') },
+    { icon: 'card-outline', text: t('landing.f3') },
+  ];
 
   return (
     <LinearGradient
@@ -36,13 +38,17 @@ export function Landing() {
               justifyContent: 'center',
             }}
           >
-            <Ionicons name="shield-half" size={54} color="#fff" />
+            {clubEmoji ? (
+              <Text style={{ fontSize: 52 }}>{clubEmoji}</Text>
+            ) : (
+              <Ionicons name="shield-half" size={54} color="#fff" />
+            )}
           </View>
           <Text style={{ color: '#fff', fontSize: 40, fontWeight: '900', letterSpacing: 0.5 }}>
-            CoachDeck
+            {clubName ?? 'CoachDeck'}
           </Text>
           <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: font.body, textAlign: 'center' }}>
-            Centrum dla trenerów i klubów sportowych
+            {t('landing.tagline')}
           </Text>
         </View>
 
@@ -83,12 +89,12 @@ export function Landing() {
             opacity: pressed ? 0.9 : 1,
           })}
         >
-          <Text style={{ color: '#059669', fontWeight: '800', fontSize: font.h3 }}>Wejdź do aplikacji</Text>
+          <Text style={{ color: '#059669', fontWeight: '800', fontSize: font.h3 }}>{t('landing.enter')}</Text>
           <Ionicons name="arrow-forward" size={20} color="#059669" />
         </Pressable>
         <Pressable onPress={openProfilePicker} style={{ alignItems: 'center', paddingVertical: spacing.sm }}>
           <Text style={{ color: 'rgba(255,255,255,0.9)', fontWeight: '600' }}>
-            Profil: {profile.name} · zmień
+            {t('landing.profile')}: {profile.name} · {t('landing.change')}
           </Text>
         </Pressable>
       </View>

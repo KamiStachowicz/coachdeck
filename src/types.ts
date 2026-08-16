@@ -259,3 +259,14 @@ export interface Camp {
   capacity: number;
   signups: number;
 }
+
+/* ---------- Komunikacja ---------- */
+
+export interface Announcement {
+  id: string;
+  teamId?: string; // null = do wszystkich
+  title: string;
+  body: string;
+  date: string; // ISO
+  pinned: boolean;
+}
