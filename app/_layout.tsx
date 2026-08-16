@@ -1,12 +1,14 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Pressable, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { StoreProvider, useStore } from '@/src/store';
-import { brand } from '@/src/theme';
+import { brand, useTheme } from '@/src/theme';
 import { Onboarding } from '@/components/Onboarding';
 import { ProfilePicker } from '@/components/ProfilePicker';
 
@@ -58,7 +60,12 @@ function RootLayoutNav() {
   return (
     <StoreProvider>
       <ThemeProvider value={colorScheme === 'dark' ? CoachDark : CoachLight}>
-        <Stack>
+        <Stack
+          screenOptions={{
+            headerBackVisible: false,
+            headerLeft: () => <HeaderBack />,
+          }}
+        >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Dodaj' }} />
           <Stack.Screen name="team/[id]" options={{ title: 'Drużyna' }} />
@@ -79,6 +86,25 @@ function RootLayoutNav() {
         <OnboardingGate />
       </ThemeProvider>
     </StoreProvider>
+  );
+}
+
+function HeaderBack() {
+  const router = useRouter();
+  const c = useTheme();
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)');
+  };
+  return (
+    <Pressable
+      onPress={goBack}
+      hitSlop={12}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 8, marginLeft: -4 }}
+    >
+      <Ionicons name="chevron-back" size={26} color={c.primary} />
+      <Text style={{ color: c.primary, fontSize: 16, fontWeight: '600' }}>Wstecz</Text>
+    </Pressable>
   );
 }
 
