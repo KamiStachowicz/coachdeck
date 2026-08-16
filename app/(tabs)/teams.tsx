@@ -11,7 +11,7 @@ import { Card, Badge, Avatar, SectionTitle } from '@/components/ui';
 export default function TeamsScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { teams, players } = useStore();
+  const { visibleTeams: teams, players } = useStore();
 
   return (
     <ScrollView

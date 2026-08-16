@@ -11,7 +11,7 @@ import { Card, Avatar, Badge, PrimaryButton, statusMeta } from '@/components/ui'
 export default function PlayersScreen() {
   const c = useTheme();
   const router = useRouter();
-  const { players, teams, getTeam } = useStore();
+  const { visiblePlayers: players, visibleTeams: teams, getTeam } = useStore();
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
 
   const filtered = useMemo(

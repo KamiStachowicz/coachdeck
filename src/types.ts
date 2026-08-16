@@ -270,3 +270,27 @@ export interface Announcement {
   date: string; // ISO
   pinned: boolean;
 }
+
+/* ---------- Katalog trenerów ---------- */
+
+export interface DirectoryCoach {
+  id: string;
+  name: string;
+  discipline: string;
+  city: string;
+  rating: number; // 0–5
+  reviewsCount: number;
+  pricePerHour: number; // PLN
+  bio: string;
+  color: string;
+  you?: boolean; // czy to Ty
+}
+
+export interface Review {
+  id: string;
+  coachId: string;
+  author: string;
+  rating: number; // 1–5
+  text: string;
+  date: string;
+}
