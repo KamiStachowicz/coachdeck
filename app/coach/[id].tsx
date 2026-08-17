@@ -7,6 +7,7 @@ import { useStore } from '@/src/store';
 import { DIRECTORY_COACHES } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { Card, PrimaryButton, EmptyState, formatMoney, formatDate } from '@/components/ui';
+import { P24Button } from '@/components/P24Button';
 import { Stars } from '../directory';
 
 const SLOTS = ['pon. 17:00', 'wt. 18:00', 'śr. 16:00', 'czw. 19:00', 'sob. 10:00', 'sob. 11:00'];
@@ -69,6 +70,14 @@ export default function CoachDetail() {
             <Text style={{ color: c.primary, fontWeight: '900', fontSize: font.h3 }}>{formatMoney(coach.pricePerHour)} / godz.</Text>
           </View>
           <Text style={{ color: c.textMuted, fontSize: font.small, marginTop: spacing.sm }}>{coach.bio}</Text>
+          <View style={{ marginTop: spacing.md }}>
+            <P24Button
+              amount={coach.pricePerHour}
+              description={`Trening 1:1 – ${coach.name}`}
+              label="Zapłać za sesję (Przelewy24)"
+              returnPath="/directory"
+            />
+          </View>
         </Card>
 
         {/* Dostępne terminy */}

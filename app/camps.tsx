@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useStore } from '@/src/store';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { Card, Badge, ProgressBar, EmptyState, formatMoney } from '@/components/ui';
+import { P24Button } from '@/components/P24Button';
 
 export default function CampsScreen() {
   const c = useTheme();
@@ -72,21 +73,32 @@ export default function CampsScreen() {
                     <ProgressBar value={pct} color={full ? c.danger : c.accent} />
                   </View>
 
-                  <Pressable
-                    onPress={() => campSignup(cmp.id)}
-                    disabled={full}
-                    style={{
-                      marginTop: spacing.md,
-                      alignItems: 'center',
-                      paddingVertical: spacing.md,
-                      borderRadius: radius.md,
-                      backgroundColor: full ? c.cardAlt : c.primary,
-                    }}
-                  >
-                    <Text style={{ color: full ? c.textMuted : c.onPrimary, fontWeight: '800' }}>
-                      {full ? 'Lista pełna' : 'Zapisz uczestnika'}
-                    </Text>
-                  </Pressable>
+                  <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+                    <P24Button
+                      amount={cmp.deposit}
+                      description={`Zaliczka – ${cmp.title}`}
+                      label="Zapłać zaliczkę (Przelewy24)"
+                      returnPath="/camps"
+                      disabled={full}
+                      onPaid={() => campSignup(cmp.id)}
+                    />
+                    <Pressable
+                      onPress={() => campSignup(cmp.id)}
+                      disabled={full}
+                      style={{
+                        alignItems: 'center',
+                        paddingVertical: spacing.md,
+                        borderRadius: radius.md,
+                        backgroundColor: full ? c.cardAlt : c.cardAlt,
+                        borderWidth: 1,
+                        borderColor: c.border,
+                      }}
+                    >
+                      <Text style={{ color: full ? c.textMuted : c.text, fontWeight: '700', fontSize: font.small }}>
+                        {full ? 'Lista pełna' : 'Tylko zapisz (bez płatności)'}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </Card>
               );
             })}

@@ -7,6 +7,7 @@ import { useStore } from '@/src/store';
 import { getSport } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { Card, Badge, StatTile, SectionTitle, EmptyState, formatMoney, formatDate } from '@/components/ui';
+import { P24Button } from '@/components/P24Button';
 
 export default function RegistrationsScreen() {
   const c = useTheme();
@@ -110,6 +111,17 @@ export default function RegistrationsScreen() {
                         </View>
                       </View>
                     </View>
+                    {!r.paid && r.fee > 0 ? (
+                      <View style={{ marginTop: spacing.md }}>
+                        <P24Button
+                          amount={r.fee}
+                          description={`Wpisowe – ${r.firstName} ${r.lastName}`}
+                          label="Zapłać wpisowe (Przelewy24)"
+                          returnPath="/registrations"
+                          onPaid={() => toggleRegPaid(r.id)}
+                        />
+                      </View>
+                    ) : null}
                     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
                       <Pressable
                         onPress={() => toggleRegPaid(r.id)}
