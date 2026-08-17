@@ -8,7 +8,17 @@ export type SportId =
   | 'tennis'
   | 'athletics'
   | 'swimming'
-  | 'hockey';
+  | 'hockey'
+  | 'boxing'
+  | 'mma'
+  | 'kickboxing'
+  | 'judo'
+  | 'karate'
+  | 'bjj'
+  | 'wrestling'
+  | 'taekwondo'
+  | 'gymnastics'
+  | 'cycling';
 
 export interface Sport {
   id: SportId;

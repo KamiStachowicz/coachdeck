@@ -39,9 +39,24 @@ export const BRAND_COLORS = ['#059669', '#2563EB', '#DC2626', '#7C3AED', '#EA580
 /** Emoji-logo do wyboru. */
 export const CLUB_EMOJIS = ['🦅', '⚽', '🏀', '🐬', '🦁', '🐺', '🔥', '⭐', '🛡️', '🏆'];
 
+/** Kategorie wagowe – wspólne dla sportów walki. */
+const WEIGHT_CLASSES = ['Musza', 'Kogucia', 'Piórkowa', 'Lekka', 'Półśrednia', 'Średnia', 'Półciężka', 'Ciężka'];
+
 /** Sporty zespołowe (mają skład/formację, gole itd.) vs indywidualne. */
 export function isTeamSport(sport: SportId): boolean {
   return ['football', 'basketball', 'volleyball', 'handball', 'hockey'].includes(sport);
+}
+
+/** Sporty walki – dla nagłówków/etykiet trenera indywidualnego. */
+export function isCombatSport(sport: SportId): boolean {
+  return ['boxing', 'mma', 'kickboxing', 'judo', 'karate', 'bjj', 'wrestling', 'taekwondo'].includes(sport);
+}
+
+/** Lista dyscyplin dopasowana do profilu trenera. */
+export function sportsForProfile(profile: 'team' | 'individual' | 'personal' | null): Sport[] {
+  if (profile === 'team') return SPORTS.filter((s) => isTeamSport(s.id));
+  if (profile === 'individual') return SPORTS.filter((s) => !isTeamSport(s.id));
+  return SPORTS;
 }
 
 export const SPORTS: Sport[] = [
@@ -53,6 +68,18 @@ export const SPORTS: Sport[] = [
   { id: 'athletics', name: 'Lekkoatletyka', icon: 'walk-outline', color: '#DB2777', positions: ['Sprint', 'Średnie', 'Długie', 'Skoki', 'Rzuty'] },
   { id: 'swimming', name: 'Pływanie', icon: 'water-outline', color: '#0891B2', positions: ['Kraul', 'Grzbiet', 'Klasyk', 'Motylek'] },
   { id: 'hockey', name: 'Hokej', icon: 'snow-outline', color: '#4F46E5', positions: ['Bramkarz', 'Obrońca', 'Napastnik'] },
+  // Sporty walki
+  { id: 'boxing', name: 'Boks', icon: 'hand-left-outline', color: '#B91C1C', positions: WEIGHT_CLASSES },
+  { id: 'mma', name: 'MMA', icon: 'flame-outline', color: '#DC2626', positions: WEIGHT_CLASSES },
+  { id: 'kickboxing', name: 'Kickboxing', icon: 'hand-right-outline', color: '#E11D48', positions: WEIGHT_CLASSES },
+  { id: 'judo', name: 'Judo', icon: 'body-outline', color: '#4338CA', positions: WEIGHT_CLASSES },
+  { id: 'karate', name: 'Karate', icon: 'body-outline', color: '#EA580C', positions: ['Kata', 'Kumite'] },
+  { id: 'bjj', name: 'BJJ (jiu-jitsu)', icon: 'body-outline', color: '#1D4ED8', positions: ['Biały', 'Niebieski', 'Fioletowy', 'Brązowy', 'Czarny'] },
+  { id: 'wrestling', name: 'Zapasy', icon: 'body-outline', color: '#7C3AED', positions: WEIGHT_CLASSES },
+  { id: 'taekwondo', name: 'Taekwondo', icon: 'footsteps-outline', color: '#0D9488', positions: ['Poomsae', 'Kyorugi'] },
+  // Inne indywidualne
+  { id: 'gymnastics', name: 'Gimnastyka', icon: 'accessibility-outline', color: '#9333EA', positions: ['Wielobój', 'Wolne', 'Skok', 'Poręcze', 'Równoważnia'] },
+  { id: 'cycling', name: 'Kolarstwo', icon: 'bicycle-outline', color: '#16A34A', positions: ['Szosa', 'Góral (MTB)', 'Tor', 'Przełaj'] },
 ];
 
 export function getSport(id: string) {
@@ -67,6 +94,7 @@ export const TEAMS: Team[] = [
   { id: 't3', name: 'Wisła Basket', sport: 'basketball', category: 'Juniorzy', season: SEASON, colorAccent: '#EA580C' },
   { id: 't4', name: 'Delfiny Kraków', sport: 'swimming', category: 'Open', season: SEASON, colorAccent: '#0891B2' },
   { id: 't5', name: 'LKS Sokół – LA', sport: 'athletics', category: 'Juniorzy', season: SEASON, colorAccent: '#DB2777' },
+  { id: 't6', name: 'Fight Club Kraków', sport: 'boxing', category: 'Seniorzy', season: SEASON, colorAccent: '#B91C1C' },
 ];
 
 function p(
@@ -185,6 +213,11 @@ const RAW_PLAYERS: PlayerCore[] = [
   // Lekkoatleci (LKS Sokół – LA)
   p('p13', 't5', 'Jakub', 'Ostrowski', 0, 'Sprint', 2006, { fitness: 90, technique: 78, tactics: 60, mentality: 83 }),
   p('p14', 't5', 'Lena', 'Górska', 0, 'Skoki', 2007, { fitness: 87, technique: 84, tactics: 62, mentality: 80 }),
+  // Zawodnicy sportów walki (Fight Club Kraków)
+  p('p15', 't6', 'Damian', 'Kruk', 0, 'Półśrednia', 1997, { fitness: 89, technique: 86, tactics: 82, mentality: 88 }),
+  p('p16', 't6', 'Wiktor', 'Baran', 0, 'Średnia', 1999, { fitness: 87, technique: 83, tactics: 79, mentality: 84 }),
+  p('p17', 't6', 'Nikola', 'Rutkowska', 0, 'Lekka', 2001, { fitness: 85, technique: 88, tactics: 80, mentality: 86 }),
+  p('p18', 't6', 'Oskar', 'Pawlak', 0, 'Ciężka', 1995, { fitness: 84, technique: 79, tactics: 77, mentality: 82 }, 'injured'),
 ];
 
 export const PLAYERS: Player[] = RAW_PLAYERS.map(enrichPlayer);
@@ -207,6 +240,8 @@ export const EVENTS: CoachEvent[] = [
   { id: 'e3', teamId: 't2', type: 'training', title: 'Trening – technika', date: daysFromNow(1, 17), location: 'Orlik' },
   { id: 'e4', teamId: 't3', type: 'match', title: 'Puchar – 1/8 finału', date: daysFromNow(3, 19), location: 'Hala Sportowa', opponent: 'Zagłębie' },
   { id: 'e5', teamId: 't1', type: 'training', title: 'Trening – kondycja', date: daysFromNow(4, 18), location: 'Boisko boczne' },
+  { id: 'e6', teamId: 't6', type: 'training', title: 'Sparingi + praca na łapach', date: daysFromNow(1, 19), location: 'Sala bokserska' },
+  { id: 'e7', teamId: 't6', type: 'match', title: 'Gala – walka wieczoru', date: daysFromNow(5, 20), location: 'Arena Kraków', opponent: 'Team Rebel' },
 ];
 
 export const PAYMENT_KINDS: Record<

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
 import { PROFILES, type CoachProfile } from '@/src/profiles';
-import { SPORTS, SPECIALIZATIONS } from '@/src/data';
+import { sportsForProfile, SPECIALIZATIONS } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import type { SportId } from '@/src/types';
 
@@ -122,7 +122,7 @@ export function ProfilePicker() {
               </View>
             ) : (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
-                {SPORTS.map((s) => {
+                {sportsForProfile(pending).map((s) => {
                   const active = coachSport === s.id;
                   return (
                     <Pressable
