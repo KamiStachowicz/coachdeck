@@ -21,6 +21,7 @@ import type {
   DirectoryCoach,
   Review,
   SlotBooking,
+  ChatThread,
 } from './types';
 
 /** Specjalizacje trenera personalnego. */
@@ -445,6 +446,42 @@ export const ANNOUNCEMENTS: Announcement[] = [
   { id: 'an1', title: 'Zmiana godziny treningu', body: 'W czwartek trening zaczynamy o 17:30 zamiast 18:00. Prosimy o punktualność.', date: payDate(-1), pinned: true },
   { id: 'an2', teamId: 't1', title: 'Mecz wyjazdowy', body: 'Zbiórka w sobotę o 13:00 pod klubem. Zabierzcie dwa komplety strojów.', date: payDate(-3), pinned: false },
   { id: 'an3', title: 'Składki za wrzesień', body: 'Przypominamy o opłaceniu składek do końca tygodnia. Można online w aplikacji.', date: payDate(-5), pinned: false },
+];
+
+/* ---------- Czat trener ↔ rodzic/klient (demo) ---------- */
+
+const H = 3600000;
+export const CHAT_THREADS: ChatThread[] = [
+  {
+    id: 'ch1',
+    name: 'Mama Kacpra',
+    role: 'Rodzic · Orlęta U-15',
+    color: '#059669',
+    messages: [
+      { id: 'm1', from: 'client', text: 'Dzień dobry! Czy Kacper będzie grał w sobotę?', ts: Date.now() - 26 * H },
+      { id: 'm2', from: 'coach', text: 'Dzień dobry! Tak, jest w kadrze meczowej. Zbiórka 13:00 pod klubem.', ts: Date.now() - 25 * H },
+      { id: 'm3', from: 'client', text: 'Super, dziękuję! Będzie na pewno.', ts: Date.now() - 25 * H + 5 * 60000 },
+    ],
+  },
+  {
+    id: 'ch2',
+    name: 'Anna (klient)',
+    role: 'Trening personalny',
+    color: '#F97316',
+    messages: [
+      { id: 'm4', from: 'client', text: 'Cześć, możemy przełożyć wtorkowy trening na środę?', ts: Date.now() - 4 * H },
+      { id: 'm5', from: 'coach', text: 'Jasne, środa 18:00 wolna. Rezerwuję.', ts: Date.now() - 3 * H },
+    ],
+  },
+  {
+    id: 'ch3',
+    name: 'Tata Igora',
+    role: 'Rodzic · Orlęta U-15',
+    color: '#2563EB',
+    messages: [
+      { id: 'm6', from: 'client', text: 'Czy jest zniżka przy dwójce dzieci w klubie?', ts: Date.now() - 50 * H },
+    ],
+  },
 ];
 
 /* ---------- Katalog trenerów (demo) ---------- */

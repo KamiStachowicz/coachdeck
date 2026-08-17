@@ -103,6 +103,24 @@ export async function fetchPastEvents(leagueId: string): Promise<ProMatch[]> {
   }));
 }
 
+/** Najbliższe (nadchodzące) mecze w lidze. */
+export async function fetchNextEvents(leagueId: string): Promise<ProMatch[]> {
+  const data = await getJson(`${BASE}/eventsnextleague.php?id=${leagueId}`);
+  const events = data?.events;
+  if (!Array.isArray(events)) return [];
+  return events.map((e: any) => ({
+    id: String(e.idEvent),
+    home: e.strHomeTeam,
+    away: e.strAwayTeam,
+    homeScore: null,
+    awayScore: null,
+    date: e.dateEvent,
+    league: e.strLeague,
+    homeBadge: e.strHomeTeamBadge ?? undefined,
+    awayBadge: e.strAwayTeamBadge ?? undefined,
+  }));
+}
+
 /** Wyszukiwanie lig po kraju (np. 'Poland') i sporcie (np. 'Soccer'). */
 export async function searchLeagues(country: string, sport = 'Soccer'): Promise<LeaguePreset[]> {
   const data = await getJson(

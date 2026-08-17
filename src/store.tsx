@@ -21,6 +21,8 @@ import type {
   Review,
   Booking,
   SlotBooking,
+  RsvpStatus,
+  ChatThread,
 } from './types';
 import type { Lang } from './i18n';
 import type { SportId } from './types';
@@ -43,6 +45,7 @@ import {
   REVIEWS,
   INITIAL_AVAILABILITY,
   SLOT_BOOKINGS,
+  CHAT_THREADS,
   enrichPlayer,
 } from './data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -151,6 +154,12 @@ interface StoreValue {
   slotBookings: SlotBooking[];
   isSlotBooked: (slotKey: string) => boolean;
   bookingFor: (slotKey: string) => string | undefined;
+  // RSVP – potwierdzenia obecności rodzica/zawodnika
+  setRsvp: (eventId: string, playerId: string, status: RsvpStatus) => void;
+  rsvpFor: (eventId: string, playerId: string) => RsvpStatus | undefined;
+  // Czat trener ↔ rodzic/klient
+  chatThreads: ChatThread[];
+  sendChat: (threadId: string, text: string, from?: 'coach' | 'client') => void;
   favorites: string[];
   toggleFavorite: (coachId: string) => void;
   profilePickerOpen: boolean;
@@ -239,6 +248,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [availability, setAvailabilityState] = useState<string[]>(INITIAL_AVAILABILITY);
   const [slotBookings] = useState<SlotBooking[]>(SLOT_BOOKINGS);
+  const [rsvps, setRsvps] = useState<Record<string, Record<string, RsvpStatus>>>({});
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>(CHAT_THREADS);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const [entered, setEntered] = useState<boolean>(false);
@@ -599,6 +610,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       slotBookings,
       isSlotBooked: (slotKey) => slotBookings.some((b) => b.slotKey === slotKey),
       bookingFor: (slotKey) => slotBookings.find((b) => b.slotKey === slotKey)?.clientName,
+      setRsvp: (eventId, playerId, status) =>
+        setRsvps((prev) => ({ ...prev, [eventId]: { ...(prev[eventId] ?? {}), [playerId]: status } })),
+      rsvpFor: (eventId, playerId) => rsvps[eventId]?.[playerId],
+      chatThreads,
+      sendChat: (threadId, text, from = 'coach') =>
+        setChatThreads((prev) =>
+          prev.map((t) =>
+            t.id === threadId
+              ? { ...t, messages: [...t.messages, { id: nextId('cm'), from, text, ts: Date.now() }] }
+              : t,
+          ),
+        ),
       favorites,
       toggleFavorite: (coachId) =>
         setFavorites((prev) => (prev.includes(coachId) ? prev.filter((x) => x !== coachId) : [...prev, coachId])),
@@ -703,7 +726,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, listingCity, listingPrice, listingBio, reviews, bookings, availability, slotBookings, favorites, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, listingCity, listingPrice, listingBio, reviews, bookings, availability, slotBookings, rsvps, chatThreads, favorites, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

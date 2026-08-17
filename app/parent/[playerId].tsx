@@ -1,10 +1,11 @@
 import React from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
 import { getSport, isTeamSport } from '@/src/data';
+import { P24Button } from '@/components/P24Button';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import {
   Card,
@@ -22,7 +23,7 @@ import {
 export default function ParentView() {
   const c = useTheme();
   const { playerId } = useLocalSearchParams<{ playerId: string }>();
-  const { getPlayer, getTeam, eventsByTeam, attendanceStats, paymentsByPlayer, announcements, recordsByPlayer } =
+  const { getPlayer, getTeam, eventsByTeam, attendanceStats, paymentsByPlayer, announcements, recordsByPlayer, markPaid, setRsvp, rsvpFor } =
     useStore();
 
   const player = getPlayer(playerId);
@@ -90,8 +91,9 @@ export default function ParentView() {
             <View style={{ gap: spacing.md }}>
               {payments.map((p) => {
                 const st = paymentStatusMeta[p.status];
+                const unpaid = p.status !== 'paid';
                 return (
-                  <Card key={p.id}>
+                  <Card key={p.id} style={{ gap: spacing.sm }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: c.text, fontWeight: '700', fontSize: font.small }}>{p.title}</Text>
@@ -102,6 +104,15 @@ export default function ParentView() {
                       </View>
                       <Text style={{ color: c.text, fontWeight: '900' }}>{formatMoney(p.amount)}</Text>
                     </View>
+                    {unpaid ? (
+                      <P24Button
+                        amount={p.amount}
+                        description={`${p.title} – ${player.firstName} ${player.lastName}`}
+                        label="Zapłać składkę (Przelewy24)"
+                        returnPath={`/parent/${player.id}`}
+                        onPaid={() => markPaid(p.id)}
+                      />
+                    ) : null}
                   </Card>
                 );
               })}
@@ -123,8 +134,9 @@ export default function ParentView() {
             <View style={{ gap: spacing.md }}>
               {upcoming.map((e) => {
                 const isMatch = e.type === 'match';
+                const rsvp = rsvpFor(e.id, player.id);
                 return (
-                  <Card key={e.id}>
+                  <Card key={e.id} style={{ gap: spacing.sm }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                       <Ionicons name={isMatch ? 'trophy-outline' : 'barbell-outline'} size={22} color={isMatch ? c.accent : c.primary} />
                       <View style={{ flex: 1 }}>
@@ -134,6 +146,39 @@ export default function ParentView() {
                           {e.location ? ` · ${e.location}` : ''}
                         </Text>
                       </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                      {(['yes', 'no'] as const).map((v) => {
+                        const active = rsvp === v;
+                        const col = v === 'yes' ? c.primary : c.danger;
+                        return (
+                          <Pressable
+                            key={v}
+                            onPress={() => setRsvp(e.id, player.id, v)}
+                            style={{
+                              flex: 1,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 6,
+                              paddingVertical: spacing.sm,
+                              borderRadius: radius.md,
+                              backgroundColor: active ? col : c.cardAlt,
+                              borderWidth: 1,
+                              borderColor: active ? col : c.border,
+                            }}
+                          >
+                            <Ionicons
+                              name={v === 'yes' ? 'checkmark-circle' : 'close-circle'}
+                              size={16}
+                              color={active ? '#fff' : col}
+                            />
+                            <Text style={{ color: active ? '#fff' : c.text, fontWeight: '700', fontSize: font.small }}>
+                              {v === 'yes' ? 'Będę' : 'Nie będę'}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
                     </View>
                   </Card>
                 );
@@ -176,7 +221,7 @@ export default function ParentView() {
         </View>
 
         <Text style={{ color: c.textMuted, fontSize: font.tiny, textAlign: 'center' }}>
-          To podgląd dla rodzica/zawodnika (tylko do odczytu).
+          Konto rodzica/zawodnika: opłacaj składki online i potwierdzaj obecność.
         </Text>
       </ScrollView>
     </>

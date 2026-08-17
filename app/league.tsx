@@ -11,6 +11,7 @@ import {
   LEAGUE_PRESETS,
   fetchStandings,
   fetchPastEvents,
+  fetchNextEvents,
   searchLeagues,
   type LeaguePreset,
   type ProMatch,
@@ -136,7 +137,10 @@ function ProLeagueInner() {
   const [rows, setRows] = useState<StandingRow[]>([]);
   const [season, setSeason] = useState<string>('');
   const [events, setEvents] = useState<ProMatch[]>([]);
+  const [nextEvents, setNextEvents] = useState<ProMatch[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // wyszukiwarka
   const [query, setQuery] = useState('');
@@ -148,7 +152,11 @@ function ProLeagueInner() {
     (async () => {
       setLoading(true);
       setError(null);
-      const [st, ev] = await Promise.all([fetchStandings(league.id), fetchPastEvents(league.id)]);
+      const [st, ev, nx] = await Promise.all([
+        fetchStandings(league.id),
+        fetchPastEvents(league.id),
+        fetchNextEvents(league.id),
+      ]);
       if (!active) return;
       if (st) {
         setRows(st.rows);
@@ -159,12 +167,14 @@ function ProLeagueInner() {
         setError('Brak tabeli dla tej ligi (możliwe ograniczenia darmowego klucza API).');
       }
       setEvents(ev.slice(0, 8));
+      setNextEvents(nx.slice(0, 6));
+      setUpdatedAt(Date.now());
       setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, [league]);
+  }, [league, refreshKey]);
 
   const runSearch = async () => {
     if (!query.trim()) return;
@@ -253,7 +263,27 @@ function ProLeagueInner() {
         ) : null}
       </Card>
 
-      <SectionTitle title={`${league.name}${season ? ` · ${season}` : ''}`} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3 }}>
+            {league.name}{season ? ` · ${season}` : ''}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: error ? c.danger : c.primary }} />
+            <Text style={{ color: c.textMuted, fontSize: font.tiny }}>
+              {error ? 'Offline' : 'Na żywo'}
+              {updatedAt ? ` · aktualizacja ${new Date(updatedAt).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}` : ''}
+            </Text>
+          </View>
+        </View>
+        <Pressable
+          onPress={() => setRefreshKey((k) => k + 1)}
+          disabled={loading}
+          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.card, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Ionicons name="refresh" size={18} color={c.primary} />
+        </Pressable>
+      </View>
 
       {loading ? (
         <ActivityIndicator style={{ marginVertical: spacing.xl }} color={c.primary} size="large" />
@@ -262,6 +292,35 @@ function ProLeagueInner() {
       ) : (
         <>
           <StandingsTable rows={rows} />
+          {nextEvents.length > 0 ? (
+            <View>
+              <SectionTitle title="Nadchodzące mecze" />
+              <View style={{ gap: spacing.sm }}>
+                {nextEvents.map((m) => (
+                  <Card key={m.id}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        {m.homeBadge ? (
+                          <Image source={{ uri: m.homeBadge }} style={{ width: 18, height: 18 }} resizeMode="contain" />
+                        ) : null}
+                        <Text style={{ color: c.text, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{m.home}</Text>
+                      </View>
+                      <View style={{ alignItems: 'center', marginHorizontal: spacing.md }}>
+                        <Text style={{ color: c.textMuted, fontSize: font.tiny }}>{m.date ? formatDate(m.date) : '—'}</Text>
+                        <Text style={{ color: c.primary, fontWeight: '800', fontSize: font.tiny }}>vs</Text>
+                      </View>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                        <Text style={{ color: c.text, fontWeight: '600', flexShrink: 1, textAlign: 'right' }} numberOfLines={1}>{m.away}</Text>
+                        {m.awayBadge ? (
+                          <Image source={{ uri: m.awayBadge }} style={{ width: 18, height: 18 }} resizeMode="contain" />
+                        ) : null}
+                      </View>
+                    </View>
+                  </Card>
+                ))}
+              </View>
+            </View>
+          ) : null}
           {events.length > 0 ? (
             <View>
               <SectionTitle title="Ostatnie mecze" />

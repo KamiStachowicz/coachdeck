@@ -319,3 +319,23 @@ export interface SlotBooking {
   clientName: string; // kto zarezerwował
   date: string; // ISO utworzenia
 }
+
+/** Potwierdzenie obecności (RSVP) rodzica/zawodnika na wydarzenie. */
+export type RsvpStatus = 'yes' | 'no';
+
+/** Wiadomość w wątku czatu. */
+export interface ChatMessage {
+  id: string;
+  from: 'coach' | 'client';
+  text: string;
+  ts: number;
+}
+
+/** Wątek czatu trener ↔ rodzic/klient. */
+export interface ChatThread {
+  id: string;
+  name: string; // np. "Mama Kacpra" / "Anna (klient)"
+  role: string; // np. "Rodzic · Orlęta U-15"
+  color: string;
+  messages: ChatMessage[];
+}
