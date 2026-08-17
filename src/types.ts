@@ -311,3 +311,11 @@ export interface Booking {
   slot: string; // etykieta terminu, np. "pon. 17:00"
   date: string; // ISO utworzenia
 }
+
+/** Zaklepany (zarezerwowany) slot w grafiku trenera indywidualnego. */
+export interface SlotBooking {
+  id: string;
+  slotKey: string; // `${rok}-${miesiąc}-${dzień}T${godzina}`, np. "2026-7-17T18"
+  clientName: string; // kto zarezerwował
+  date: string; // ISO utworzenia
+}

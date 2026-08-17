@@ -16,6 +16,7 @@ const MENU: {
   route?: string;
 }[] = [
   { icon: 'card-outline', label: 'Finanse i składki', hint: 'Opłaty, składki, zajęcia', route: '/finances' },
+  { icon: 'calendar-number-outline', label: 'Moja dostępność', hint: 'Wolne terminy, zajęte na szaro', route: '/availability' },
   { icon: 'person-add-outline', label: 'Nabór i zapisy', hint: 'Zgłoszenia i wpisowe', route: '/registrations' },
   { icon: 'bonfire-outline', label: 'Obozy i eventy', hint: 'Rezerwacje i zaliczki', route: '/camps' },
   { icon: 'trophy-outline', label: 'Liga i wyniki', hint: 'Tabela ligowa i mecze', route: '/league' },
@@ -45,6 +46,8 @@ export default function MoreScreen() {
   const menu = MENU.filter((m) => {
     if (m.route === '/league') return profile.show.league;
     if (m.route === '/scouting') return profile.show.scouting;
+    // Grafik dostępności ma sens dla trenerów przyjmujących 1:1 (indywidualny/personalny).
+    if (m.route === '/availability') return coachProfile !== 'team';
     return true;
   });
   const planLabel = trialActive

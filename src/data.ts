@@ -20,6 +20,7 @@ import type {
   Announcement,
   DirectoryCoach,
   Review,
+  SlotBooking,
 } from './types';
 
 /** Specjalizacje trenera personalnego. */
@@ -242,6 +243,31 @@ export const EVENTS: CoachEvent[] = [
   { id: 'e5', teamId: 't1', type: 'training', title: 'Trening – kondycja', date: daysFromNow(4, 18), location: 'Boisko boczne' },
   { id: 'e6', teamId: 't6', type: 'training', title: 'Sparingi + praca na łapach', date: daysFromNow(1, 19), location: 'Sala bokserska' },
   { id: 'e7', teamId: 't6', type: 'match', title: 'Gala – walka wieczoru', date: daysFromNow(5, 20), location: 'Arena Kraków', opponent: 'Team Rebel' },
+];
+
+/** Klucz slotu grafiku: `${rok}-${miesiąc}-${dzień}T${godzina}` (spójny z dayKey z MonthCalendar). */
+export function slotKeyFromDate(d: Date, hour: number): string {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}T${hour}`;
+}
+function slotKeyIn(daysFromToday: number, hour: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromToday);
+  return slotKeyFromDate(d, hour);
+}
+
+/** Wolne godziny zaznaczone przez trenera (demo – startowa dostępność). */
+export const INITIAL_AVAILABILITY: string[] = [
+  slotKeyIn(1, 16), slotKeyIn(1, 17), slotKeyIn(1, 18), slotKeyIn(1, 19),
+  slotKeyIn(2, 9), slotKeyIn(2, 10), slotKeyIn(2, 17), slotKeyIn(2, 18),
+  slotKeyIn(3, 16), slotKeyIn(3, 17), slotKeyIn(3, 18),
+];
+
+/** Sloty już zaklepane przez klientów (pokazywane na szaro). */
+export const SLOT_BOOKINGS: SlotBooking[] = [
+  { id: 'sb1', slotKey: slotKeyIn(1, 17), clientName: 'Kuba N.', date: daysFromNow(0, 12) },
+  { id: 'sb2', slotKey: slotKeyIn(1, 18), clientName: 'Ola W.', date: daysFromNow(0, 12) },
+  { id: 'sb3', slotKey: slotKeyIn(2, 10), clientName: 'Marek P.', date: daysFromNow(0, 12) },
+  { id: 'sb4', slotKey: slotKeyIn(3, 16), clientName: 'Zofia L.', date: daysFromNow(0, 12) },
 ];
 
 export const PAYMENT_KINDS: Record<

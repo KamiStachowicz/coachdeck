@@ -101,6 +101,7 @@ function ThemedApp() {
         <Stack.Screen name="parent/[playerId]" options={{ title: 'Podgląd rodzica' }} />
         <Stack.Screen name="directory" options={{ title: 'Znajdź trenera' }} />
         <Stack.Screen name="coach/[id]" options={{ title: 'Trener' }} />
+        <Stack.Screen name="availability" options={{ title: 'Moja dostępność' }} />
       </Stack>
       <OnboardingGate />
     </ThemeProvider>

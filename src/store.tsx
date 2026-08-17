@@ -20,6 +20,7 @@ import type {
   Announcement,
   Review,
   Booking,
+  SlotBooking,
 } from './types';
 import type { Lang } from './i18n';
 import type { SportId } from './types';
@@ -40,6 +41,8 @@ import {
   CAMPS,
   ANNOUNCEMENTS,
   REVIEWS,
+  INITIAL_AVAILABILITY,
+  SLOT_BOOKINGS,
   enrichPlayer,
 } from './data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -58,6 +61,7 @@ const CLUBEMOJI_KEY = 'coachdeck.clubEmoji';
 const SPORT_KEY = 'coachdeck.coachSport';
 const SPECS_KEY = 'coachdeck.coachSpecs';
 const LISTED_KEY = 'coachdeck.listed';
+const AVAIL_KEY = 'coachdeck.availability';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -140,6 +144,13 @@ interface StoreValue {
   bookings: Booking[];
   addBooking: (coachId: string, slot: string) => void;
   isBooked: (coachId: string, slot: string) => boolean;
+  // Grafik dostępności trenera indywidualnego
+  availability: string[]; // klucze wolnych slotów `${dayKey}T${hour}`
+  toggleAvailability: (slotKey: string) => void;
+  setDayAvailability: (slotKeys: string[], on: boolean) => void;
+  slotBookings: SlotBooking[];
+  isSlotBooked: (slotKey: string) => boolean;
+  bookingFor: (slotKey: string) => string | undefined;
   favorites: string[];
   toggleFavorite: (coachId: string) => void;
   profilePickerOpen: boolean;
@@ -226,6 +237,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [listingBio, setListingBio] = useState<string>('Indywidualne podejście, elastyczne terminy.');
   const [reviews, setReviews] = useState<Review[]>(REVIEWS);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [availability, setAvailabilityState] = useState<string[]>(INITIAL_AVAILABILITY);
+  const [slotBookings] = useState<SlotBooking[]>(SLOT_BOOKINGS);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const [entered, setEntered] = useState<boolean>(false);
@@ -255,8 +268,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.getItem(SPORT_KEY),
       AsyncStorage.getItem(SPECS_KEY),
       AsyncStorage.getItem(LISTED_KEY),
+      AsyncStorage.getItem(AVAIL_KEY),
     ])
-      .then(([ob, pr, th, lg, bc, cn, ce, sp, spc, ls]) => {
+      .then(([ob, pr, th, lg, bc, cn, ce, sp, spc, ls, av]) => {
         if (!active) return;
         setOnboarded(ob === '1');
         if (pr === 'team' || pr === 'individual' || pr === 'personal') setCoachProfile(pr);
@@ -268,6 +282,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (sp) setCoachSportState(sp as SportId);
         if (spc) { try { setCoachSpecs(JSON.parse(spc)); } catch {} }
         if (ls === '1') setListedState(true);
+        if (av) { try { setAvailabilityState(JSON.parse(av)); } catch {} }
       })
       .catch(() => {
         if (active) setOnboarded(false);
@@ -563,6 +578,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             : [...prev, { id: nextId('bk'), coachId, slot, date: new Date().toISOString() }],
         ),
       isBooked: (coachId, slot) => bookings.some((x) => x.coachId === coachId && x.slot === slot),
+      availability,
+      toggleAvailability: (slotKey) =>
+        setAvailabilityState((prev) => {
+          const next = prev.includes(slotKey) ? prev.filter((k) => k !== slotKey) : [...prev, slotKey];
+          AsyncStorage.setItem(AVAIL_KEY, JSON.stringify(next)).catch(() => {});
+          return next;
+        }),
+      setDayAvailability: (slotKeys, on) =>
+        setAvailabilityState((prev) => {
+          const set = new Set(prev);
+          for (const k of slotKeys) {
+            if (on) set.add(k);
+            else set.delete(k);
+          }
+          const next = Array.from(set);
+          AsyncStorage.setItem(AVAIL_KEY, JSON.stringify(next)).catch(() => {});
+          return next;
+        }),
+      slotBookings,
+      isSlotBooked: (slotKey) => slotBookings.some((b) => b.slotKey === slotKey),
+      bookingFor: (slotKey) => slotBookings.find((b) => b.slotKey === slotKey)?.clientName,
       favorites,
       toggleFavorite: (coachId) =>
         setFavorites((prev) => (prev.includes(coachId) ? prev.filter((x) => x !== coachId) : [...prev, coachId])),
@@ -667,7 +703,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       financeSummary: { collected, pending, overdue, total: pending + overdue },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, listingCity, listingPrice, listingBio, reviews, bookings, favorites, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
+  }, [teams, players, events, payments, lineups, standings, results, scoutTargets, transfers, goals, records, packages, measurements, billingCycle, coupon, registrations, camps, subscribedPlan, trialEndsAt, onboarded, coachProfile, coachSport, coachSpecs, listedInDirectory, listingCity, listingPrice, listingBio, reviews, bookings, availability, slotBookings, favorites, pickerOpen, entered, themeMode, lang, brandColor, clubName, clubEmoji, announcements, attendance, loading, backend]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
