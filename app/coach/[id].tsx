@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, View, Text, Share, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useStore } from '@/src/store';
-import { DIRECTORY_COACHES } from '@/src/data';
+import { DIRECTORY_COACHES, coachDaySlots } from '@/src/data';
 import { useTheme, spacing, font, radius } from '@/src/theme';
 import { Card, PrimaryButton, EmptyState, formatMoney, formatDate } from '@/components/ui';
 import { P24Button } from '@/components/P24Button';
+import { MonthCalendar, dayKey } from '@/components/MonthCalendar';
 import { Stars } from '../directory';
 
-const SLOTS = ['pon. 17:00', 'wt. 18:00', 'śr. 16:00', 'czw. 19:00', 'sob. 10:00', 'sob. 11:00'];
+const sameDay = (a: Date, b: Date) => dayKey(a) === dayKey(b);
 
 export default function CoachDetail() {
   const c = useTheme();
@@ -36,6 +37,31 @@ export default function CoachDetail() {
       setRating(5);
     }
   };
+
+  // Rezerwacja z kalendarza – realne wolne godziny trenera.
+  const today = new Date();
+  const [bookDay, setBookDay] = useState<Date>(today);
+
+  // Dni z jakąkolwiek ofertą terminów (na potrzeby kropek w kalendarzu).
+  const marks = useMemo(() => {
+    const s = new Set<string>();
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      if (coachDaySlots(coach.id, d).length > 0) s.add(dayKey(d));
+    }
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coach.id]);
+
+  // Sloty wybranego dnia (dukrywamy godziny z przeszłości, jeśli to dziś).
+  const daySlots = useMemo(() => {
+    const isPast = bookDay < today && !sameDay(bookDay, today);
+    if (isPast) return [];
+    const nowH = today.getHours();
+    return coachDaySlots(coach.id, bookDay).filter((sl) => !(sameDay(bookDay, today) && sl.hour <= nowH));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coach.id, bookDay]);
 
   return (
     <>
@@ -80,37 +106,54 @@ export default function CoachDetail() {
           </View>
         </Card>
 
-        {/* Dostępne terminy */}
+        {/* Dostępne terminy – z kalendarza */}
         <View>
           <Text style={{ color: c.text, fontWeight: '800', fontSize: font.h3, marginBottom: spacing.md }}>Zarezerwuj termin</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-            {SLOTS.map((s) => {
-              const booked = isBooked(coach.id, s);
-              return (
-                <Pressable
-                  key={s}
-                  onPress={() => addBooking(coach.id, s)}
-                  disabled={booked}
-                  style={{
-                    paddingHorizontal: spacing.md,
-                    paddingVertical: spacing.sm,
-                    borderRadius: radius.md,
-                    backgroundColor: booked ? c.primary : c.card,
-                    borderWidth: 1,
-                    borderColor: booked ? c.primary : c.border,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  {booked ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
-                  <Text style={{ color: booked ? '#fff' : c.text, fontWeight: '700', fontSize: font.small }}>{s}</Text>
-                </Pressable>
-              );
-            })}
+          <MonthCalendar selected={bookDay} onSelect={setBookDay} marks={marks} />
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm }}>
+            <Text style={{ color: c.text, fontWeight: '800', fontSize: font.body }}>{formatDate(bookDay.toISOString())}</Text>
           </View>
+
+          {daySlots.length === 0 ? (
+            <Text style={{ color: c.textMuted, fontSize: font.small }}>Brak wolnych terminów tego dnia — wybierz inny.</Text>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              {daySlots.map((sl) => {
+                const key = `${dayKey(bookDay)}T${sl.hour}`;
+                const mine = isBooked(coach.id, key);
+                const taken = sl.booked && !mine; // zajęte przez kogoś innego
+                const label = `${String(sl.hour).padStart(2, '0')}:00`;
+                const bg = mine ? c.primary : taken ? c.cardAlt : c.card;
+                const fg = mine ? c.onPrimary : taken ? c.textMuted : c.text;
+                return (
+                  <Pressable
+                    key={sl.hour}
+                    onPress={() => !taken && !mine && addBooking(coach.id, key)}
+                    disabled={taken || mine}
+                    style={{
+                      minWidth: 84,
+                      paddingHorizontal: spacing.md,
+                      paddingVertical: spacing.sm,
+                      borderRadius: radius.md,
+                      backgroundColor: bg,
+                      borderWidth: 1,
+                      borderColor: mine ? c.primary : c.border,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    {mine ? <Ionicons name="checkmark-circle" size={14} color={c.onPrimary} /> : taken ? <Ionicons name="lock-closed" size={12} color={c.textMuted} /> : null}
+                    <Text style={{ color: fg, fontWeight: '700', fontSize: font.small }}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
           <Text style={{ color: c.textMuted, fontSize: font.tiny, marginTop: spacing.sm }}>
-            Dotknij termin, aby zarezerwować (demo — potwierdzenie po podłączeniu backendu).
+            Zielone = Twoja rezerwacja · szare z kłódką = termin zajęty. (demo — potwierdzenie po podłączeniu backendu)
           </Text>
         </View>
 

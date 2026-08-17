@@ -262,6 +262,22 @@ export const INITIAL_AVAILABILITY: string[] = [
   slotKeyIn(3, 16), slotKeyIn(3, 17), slotKeyIn(3, 18),
 ];
 
+/**
+ * Deterministyczne terminy trenera z katalogu (dla demo trenerów dc1–dc6).
+ * Zwraca godziny oferowane danego dnia wraz z informacją, czy są już zaklepane.
+ * Stabilne między odświeżeniami (seed = coachId + dzień).
+ */
+export function coachDaySlots(coachId: string, date: Date): { hour: number; booked: boolean }[] {
+  const dk = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  const rnd = seededRand(`${coachId}|${dk}`);
+  const pool = [9, 10, 11, 12, 16, 17, 18, 19, 20];
+  const out: { hour: number; booked: boolean }[] = [];
+  for (const h of pool) {
+    if (rnd() > 0.55) out.push({ hour: h, booked: rnd() > 0.7 });
+  }
+  return out;
+}
+
 /** Sloty już zaklepane przez klientów (pokazywane na szaro). */
 export const SLOT_BOOKINGS: SlotBooking[] = [
   { id: 'sb1', slotKey: slotKeyIn(1, 17), clientName: 'Kuba N.', date: daysFromNow(0, 12) },
